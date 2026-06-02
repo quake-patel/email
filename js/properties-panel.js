@@ -75,6 +75,10 @@ const PropertiesPanel = {
           <input class="prop-input prop-input--sm" type="text" value="${block.fontSize || ''}" data-prop="fontSize" placeholder="Inherit" />
         </div>
         <div class="prop-row">
+          <span class="prop-row__label">Mobile Size</span>
+          <input class="prop-input prop-input--sm" type="text" value="${block.mobileFontSize || ''}" data-prop="mobileFontSize" placeholder="Inherit" />
+        </div>
+        <div class="prop-row">
           <span class="prop-row__label">Font Family</span>
           <input class="prop-input prop-input--sm" type="text" value="${block.fontFamily || ''}" data-prop="fontFamily" placeholder="Inherit" />
         </div>
@@ -164,6 +168,10 @@ const PropertiesPanel = {
         <div class="prop-row">
           <span class="prop-row__label">Font Size</span>
           <input class="prop-input prop-input--sm" type="text" value="${block.fontSize || '16px'}" data-prop="fontSize" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Mobile Size</span>
+          <input class="prop-input prop-input--sm" type="text" value="${block.mobileFontSize || ''}" data-prop="mobileFontSize" placeholder="Inherit" />
         </div>
         <div class="prop-row">
           <span class="prop-row__label">Font Weight</span>
@@ -290,8 +298,20 @@ const PropertiesPanel = {
           ${this.renderColorPicker(block.color || '#232429', 'color')}
         </div>
         <div class="prop-row">
+          <span class="prop-row__label">Font Family</span>
+          <input class="prop-input" type="text" value="${block.fontFamily || ''}" data-prop="fontFamily" placeholder="Inherit" />
+        </div>
+        <div class="prop-row">
           <span class="prop-row__label">Font Size</span>
           <input class="prop-input prop-input--sm" type="text" value="${block.fontSize || '14px'}" data-prop="fontSize" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Font Weight</span>
+          <select class="prop-select" data-prop="fontWeight" style="width: 80px;">
+            <option value="normal" ${block.fontWeight === 'normal' ? 'selected' : ''}>Normal</option>
+            <option value="600" ${block.fontWeight === '600' || !block.fontWeight ? 'selected' : ''}>Semi-Bold</option>
+            <option value="bold" ${block.fontWeight === 'bold' ? 'selected' : ''}>Bold</option>
+          </select>
         </div>
         <div class="prop-row">
           <span class="prop-row__label">Full Width</span>

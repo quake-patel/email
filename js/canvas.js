@@ -379,11 +379,12 @@ const Canvas = {
   },
 
   renderMenuBlock(block) {
+    const gs = EmailState.data.globalStyles;
     let items = '';
     (block.items || []).forEach((item, i) => {
       if (i > 0 && !block.fullWidth) items += '<span style="color:#ccc;margin:0 5px;">|</span>';
       const flexStyle = block.fullWidth ? 'flex:1;text-align:center;' : '';
-      items += `<a href="${item.link || '#'}" target="_blank" style="font-family:${block.fontFamily || 'Arial'};font-size:${block.fontSize || '14px'};color:${block.color || '#232429'};text-decoration:none;font-weight:600;letter-spacing:0.5px;${flexStyle}">${item.text}</a>`;
+      items += `<a href="${item.link || '#'}" target="_blank" style="font-family:${block.fontFamily || gs.fontFamily};font-size:${block.fontSize || '14px'};color:${block.color || '#232429'};text-decoration:none;font-weight:${block.fontWeight || '600'};letter-spacing:0.5px;${flexStyle}">${item.text}</a>`;
     });
     
     const containerStyle = block.fullWidth
