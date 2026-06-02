@@ -124,6 +124,18 @@ const Utils = {
     const { r, g, b } = Utils.hexToRgb(hex);
     const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
     return luminance > 0.5;
+  },
+
+  /**
+   * Get border style string for a block
+   */
+  getBorderStyle(block) {
+    let style = block.border ? `border:${block.border};` : '';
+    if (block.borderTop) style += `border-top:${block.borderTop};`;
+    if (block.borderRight) style += `border-right:${block.borderRight};`;
+    if (block.borderBottom) style += `border-bottom:${block.borderBottom};`;
+    if (block.borderLeft) style += `border-left:${block.borderLeft};`;
+    return style;
   }
 };
 

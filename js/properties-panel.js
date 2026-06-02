@@ -86,8 +86,13 @@ const PropertiesPanel = {
           <span class="prop-row__label">Background</span>
           ${this.renderColorPicker(block.bgColor || 'transparent', 'bgColor')}
         </div>
+        ${this.renderBorderProps(block)}
         <div class="prop-row">
-          <span class="prop-row__label">Padding</span>
+          <span class="prop-row__label">Margin (Outside)</span>
+          <input class="prop-input prop-input--md" type="text" value="${block.margin || '0'}" data-prop="margin" placeholder="0" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Padding (Inside)</span>
           <input class="prop-input prop-input--md" type="text" value="${block.padding || '10px 20px'}" data-prop="padding" />
         </div>
       </div>
@@ -123,16 +128,13 @@ const PropertiesPanel = {
           <span class="prop-row__label">Background</span>
           ${this.renderColorPicker(block.bgColor || 'transparent', 'bgColor')}
         </div>
+        ${this.renderBorderProps(block)}
         <div class="prop-row">
-          <span class="prop-row__label">Border</span>
-          <input class="prop-input prop-input--md" type="text" value="${block.border || ''}" data-prop="border" placeholder="e.g. 1px solid #ccc" />
+          <span class="prop-row__label">Margin (Outside)</span>
+          <input class="prop-input prop-input--md" type="text" value="${block.margin || '0'}" data-prop="margin" placeholder="0" />
         </div>
         <div class="prop-row">
-          <span class="prop-row__label">Border Radius</span>
-          <input class="prop-input prop-input--sm" type="text" value="${block.borderRadius || '0px'}" data-prop="borderRadius" />
-        </div>
-        <div class="prop-row">
-          <span class="prop-row__label">Padding</span>
+          <span class="prop-row__label">Padding (Inside)</span>
           <input class="prop-input prop-input--md" type="text" value="${block.padding || '10px 20px'}" data-prop="padding" />
         </div>
       </div>
@@ -170,18 +172,19 @@ const PropertiesPanel = {
             <option value="bold" ${block.fontWeight === 'bold' || !block.fontWeight ? 'selected' : ''}>Bold</option>
           </select>
         </div>
-        <div class="prop-row">
-          <span class="prop-row__label">Border</span>
-          <input class="prop-input prop-input--md" type="text" value="${block.border || ''}" data-prop="border" placeholder="2px solid #000" />
-        </div>
-        <div class="prop-row">
-          <span class="prop-row__label">Border Radius</span>
-          <input class="prop-input prop-input--sm" type="text" value="${block.borderRadius || '0px'}" data-prop="borderRadius" />
-        </div>
+        ${this.renderBorderProps(block)}
         ${this.renderAlignmentRow(block.align || 'center', 'align')}
         <div class="prop-row">
           <span class="prop-row__label">Full Width</span>
           <div class="toggle-switch ${block.fullWidth ? 'toggle-switch--active' : ''}" data-prop="fullWidth" data-toggle></div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Margin (Outside)</span>
+          <input class="prop-input prop-input--md" type="text" value="${block.margin || '0'}" data-prop="margin" placeholder="0" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Padding (Inside)</span>
+          <input class="prop-input prop-input--md" type="text" value="${block.padding || '10px 20px'}" data-prop="padding" />
         </div>
       </div>
       ${this.renderMobileSettings(block)}`;
@@ -235,12 +238,16 @@ const PropertiesPanel = {
     let iconsHtml = '';
     (block.icons || []).forEach((icon, i) => {
       iconsHtml += `
-        <div class="prop-row" style="border:1px solid var(--border-color);border-radius:6px;padding:8px;margin-bottom:8px;">
-          <div style="display:flex;align-items:center;gap:8px;flex:1;">
+        <div class="prop-row" style="border:1px solid var(--border-color);border-radius:6px;padding:8px;margin-bottom:8px;flex-direction:column;align-items:stretch;">
+          <div style="display:flex;align-items:center;gap:8px;width:100%;">
             <span style="font-weight:600;text-transform:capitalize;font-size:12px;min-width:65px;">${icon.platform}</span>
-            <input class="prop-input" type="url" value="${icon.url || ''}" data-social-url="${i}" placeholder="URL" style="flex:1;font-size:11px;" />
+            <input class="prop-input" type="url" value="${icon.url || ''}" data-social-url="${i}" placeholder="Link URL" style="flex:1;font-size:11px;" />
+            <div class="toggle-switch ${icon.show ? 'toggle-switch--active' : ''}" data-social-toggle="${i}" data-toggle style="flex-shrink:0;"></div>
           </div>
-          <div class="toggle-switch ${icon.show ? 'toggle-switch--active' : ''}" data-social-toggle="${i}" data-toggle style="margin-left:8px;flex-shrink:0;"></div>
+          <div style="display:${icon.show ? 'flex' : 'none'};align-items:center;gap:8px;width:100%;margin-top:8px;">
+            <span style="font-size:11px;color:var(--text-muted);min-width:65px;">Image URL</span>
+            <input class="prop-input" type="url" value="${icon.imageUrl || ''}" data-social-image="${i}" placeholder="Leave empty for default" style="flex:1;font-size:11px;" />
+          </div>
         </div>`;
     });
 
@@ -286,6 +293,10 @@ const PropertiesPanel = {
           <span class="prop-row__label">Font Size</span>
           <input class="prop-input prop-input--sm" type="text" value="${block.fontSize || '14px'}" data-prop="fontSize" />
         </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Full Width</span>
+          <div class="toggle-switch ${block.fullWidth ? 'toggle-switch--active' : ''}" data-prop="fullWidth" data-toggle></div>
+        </div>
         ${this.renderAlignmentRow(block.align || 'center', 'align')}
       </div>
       ${this.renderMobileSettings(block)}`;
@@ -308,6 +319,38 @@ const PropertiesPanel = {
   },
 
   renderStructureProps(block) {
+    let layoutHtml = '';
+    if (block.columns.length === 2) {
+      layoutHtml = `
+        <div class="prop-row">
+          <span class="prop-row__label">Layout</span>
+          <select class="prop-select" id="prop-layout" style="width: 140px;">
+            <option value="50,50" ${block.layout.join(',') === '50,50' ? 'selected' : ''}>50% / 50%</option>
+            <option value="33,67" ${block.layout.join(',') === '33,67' ? 'selected' : ''}>33% / 67%</option>
+            <option value="67,33" ${block.layout.join(',') === '67,33' ? 'selected' : ''}>67% / 33%</option>
+            <option value="25,75" ${block.layout.join(',') === '25,75' ? 'selected' : ''}>25% / 75%</option>
+            <option value="75,25" ${block.layout.join(',') === '75,25' ? 'selected' : ''}>75% / 25%</option>
+          </select>
+        </div>`;
+    } else if (block.columns.length === 3) {
+      layoutHtml = `
+        <div class="prop-row">
+          <span class="prop-row__label">Layout</span>
+          <select class="prop-select" id="prop-layout" style="width: 140px;">
+            <option value="33,33,34" ${block.layout.join(',') === '33,33,34' ? 'selected' : ''}>33.3% / 33.3% / 33.3%</option>
+            <option value="25,25,50" ${block.layout.join(',') === '25,25,50' ? 'selected' : ''}>25% / 25% / 50%</option>
+            <option value="50,25,25" ${block.layout.join(',') === '50,25,25' ? 'selected' : ''}>50% / 25% / 25%</option>
+            <option value="25,50,25" ${block.layout.join(',') === '25,50,25' ? 'selected' : ''}>25% / 50% / 25%</option>
+          </select>
+        </div>`;
+    } else {
+      layoutHtml = `
+        <div class="prop-row">
+          <span class="prop-row__label">Layout</span>
+          <span style="font-size:12px;color:var(--text-muted);">${block.layout.join(' / ')}%</span>
+        </div>`;
+    }
+
     return `
       <div class="prop-group">
         <div class="prop-group__title">Structure / Row</div>
@@ -319,24 +362,86 @@ const PropertiesPanel = {
           <span class="prop-row__label" style="margin-bottom:4px;">Background Image URL</span>
           <input class="prop-input" type="url" value="${block.bgImage || ''}" data-prop="bgImage" placeholder="https://..." />
         </div>
-        <div class="prop-row" style="margin-top:12px;">
-          <span class="prop-row__label">Border</span>
-          <input class="prop-input prop-input--md" type="text" value="${block.border || ''}" data-prop="border" placeholder="1px solid #ccc" />
-        </div>
-        <div class="prop-row">
-          <span class="prop-row__label">Border Radius</span>
-          <input class="prop-input prop-input--sm" type="text" value="${block.borderRadius || '0px'}" data-prop="borderRadius" />
-        </div>
+        ${this.renderBorderProps(block)}
         <div class="prop-row">
           <span class="prop-row__label">Padding</span>
           <input class="prop-input prop-input--md" type="text" value="${block.padding || '0'}" data-prop="padding" />
         </div>
         <div class="prop-row">
-          <span class="prop-row__label">Layout</span>
-          <span style="font-size:12px;color:var(--text-muted);">${block.layout.join(' / ')}%</span>
+          <span class="prop-row__label">Col Gap (Horiz)</span>
+          <input class="prop-input prop-input--sm" type="number" value="${block.colGapH || 0}" data-prop="colGapH" placeholder="0" />
         </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Col Gap (Vert)</span>
+          <input class="prop-input prop-input--sm" type="number" value="${block.colGapV || 0}" data-prop="colGapV" placeholder="0" />
+        </div>
+        ${layoutHtml}
+        <div class="prop-group__title" style="margin-top: 20px;">Column Styles (Equal Height)</div>
+        ${block.layout.map((width, i) => `
+          <div class="accordion">
+            <div class="accordion__header">
+              Column ${i + 1} (${width}%)
+              <svg class="accordion__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </div>
+            <div class="accordion__body">
+              <div class="accordion__content">
+                <div class="prop-row">
+                  <span class="prop-row__label">Background</span>
+                  ${this.renderColorPicker(block['colBg_' + i] || 'transparent', 'colBg_' + i)}
+                </div>
+                <div class="prop-row">
+                  <span class="prop-row__label">Border</span>
+                  <input class="prop-input prop-input--md" type="text" value="${block['colBorder_' + i] || ''}" data-prop="colBorder_${i}" placeholder="1px solid #ccc" />
+                </div>
+                <div class="prop-row">
+                  <span class="prop-row__label">Padding</span>
+                  <input class="prop-input prop-input--md" type="text" value="${block['colPadding_' + i] || ''}" data-prop="colPadding_${i}" placeholder="Top Right Bottom Left" />
+                </div>
+              </div>
+            </div>
+          </div>
+        `).join('')}
       </div>
       ${this.renderMobileSettings(block)}`;
+  },
+
+  renderBorderProps(block) {
+    return `
+      <div class="accordion">
+        <div class="accordion__header">
+          Borders &amp; Radius
+          <svg class="accordion__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion__body">
+          <div class="accordion__content">
+            <div class="prop-row">
+              <span class="prop-row__label">All Sides</span>
+              <input class="prop-input prop-input--md" type="text" value="${block.border || ''}" data-prop="border" placeholder="e.g. 1px solid #ccc" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">Top</span>
+              <input class="prop-input prop-input--md" type="text" value="${block.borderTop || ''}" data-prop="borderTop" placeholder="e.g. 1px solid #ccc" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">Right</span>
+              <input class="prop-input prop-input--md" type="text" value="${block.borderRight || ''}" data-prop="borderRight" placeholder="e.g. 1px solid #ccc" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">Bottom</span>
+              <input class="prop-input prop-input--md" type="text" value="${block.borderBottom || ''}" data-prop="borderBottom" placeholder="e.g. 1px solid #ccc" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">Left</span>
+              <input class="prop-input prop-input--md" type="text" value="${block.borderLeft || ''}" data-prop="borderLeft" placeholder="e.g. 1px solid #ccc" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">Border Radius</span>
+              <input class="prop-input prop-input--sm" type="text" value="${block.borderRadius || '0px'}" data-prop="borderRadius" />
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
   },
 
   // ---- Global Styles ----
@@ -600,6 +705,16 @@ const PropertiesPanel = {
     const selectedBlock = EmailState.getSelectedBlock();
     const blockId = selectedBlock?.id;
 
+    // Layout change
+    const layoutSelect = document.getElementById('prop-layout');
+    if (layoutSelect && blockId) {
+      layoutSelect.addEventListener('change', (e) => {
+        const layout = e.target.value.split(',').map(Number);
+        EmailState.updateBlockWithSnapshot(blockId, { layout });
+        Canvas.render();
+      });
+    }
+
     // Email metadata inputs (subject line, preview text)
     body.querySelectorAll('[data-meta]').forEach(input => {
       const handler = Utils.debounce(() => {
@@ -763,6 +878,18 @@ const PropertiesPanel = {
         if (selectedBlock?.icons?.[idx] !== undefined) {
           selectedBlock.icons[idx].url = input.value;
           EmailState.save();
+        }
+      });
+    });
+
+    // Social Image inputs
+    body.querySelectorAll('[data-social-image]').forEach(input => {
+      input.addEventListener('change', () => {
+        const idx = parseInt(input.dataset.socialImage);
+        if (selectedBlock?.icons?.[idx] !== undefined) {
+          selectedBlock.icons[idx].imageUrl = input.value;
+          EmailState.save();
+          Canvas.render();
         }
       });
     });

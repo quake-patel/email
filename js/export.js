@@ -122,6 +122,11 @@ ${bodyContent}
       if (block.mobileAlign) {
         css += `      .es-b-${block.id} td, .es-b-${block.id} div { text-align: ${block.mobileAlign} !important; }\n`;
       }
+      
+      // Vertical column gap
+      if (block.type === 'structure' && block.colGapV) {
+        css += `      .es-b-${block.id} .es-m-pad-b-v { padding-bottom: ${block.colGapV}px !important; }\n`;
+      }
     };
 
     blocks.forEach(block => {
@@ -178,6 +183,10 @@ ${bodyContent}
     const innerWidth = width - 40;
 
     let cols = '';
+    
+    const colGapH = parseInt(block.colGapH) || 0;
+    const colGapV = parseInt(block.colGapV) || 0;
+
     block.layout.forEach((widthPct, colIdx) => {
       const colWidth = Math.floor(innerWidth * widthPct / 100);
       let cellContent = '';
@@ -188,8 +197,25 @@ ${bodyContent}
         });
       }
 
+      let hPadLeft = colGapH / 2;
+      let hPadRight = colGapH / 2;
+      if (colIdx === 0) hPadLeft = 0;
+      if (colIdx === block.layout.length - 1) hPadRight = 0;
+      if (block.layout.length === 1) { hPadLeft = 0; hPadRight = 0; }
+      
+      const hasVPad = (colIdx < block.layout.length - 1) && (colGapV > 0);
+      const vPadClass = hasVPad ? ' es-m-pad-b-v' : '';
+
+      const colBgColor = block[`colBg_${colIdx}`] || 'transparent';
+      const colBg = colBgColor !== 'transparent' ? `background-color:${colBgColor};` : '';
+      const colBorder = block[`colBorder_${colIdx}`] ? `border:${block[`colBorder_${colIdx}`]};` : '';
+      let colPadStr = `padding:0 ${hPadRight}px 0 ${hPadLeft}px;`;
+      if (block[`colPadding_${colIdx}`]) colPadStr = `padding:${block[`colPadding_${colIdx}`]};`;
+
+      const colStyles = `margin:0;width:${colWidth}px;max-width:${colWidth}px;box-sizing:border-box;${colBg}${colBorder}${colPadStr}`;
+
       cols += `
-                        <td valign="top" align="left" class="es-m-stack-col" style="padding:0;margin:0;width:${colWidth}px;max-width:${colWidth}px;overflow:hidden">
+                        <td valign="top" align="left" class="es-m-stack-col${vPadClass}" style="${colStyles}">
                           <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;max-width:${colWidth}px;table-layout:fixed">
 ${cellContent || '                            <tr><td style="padding:0;margin:0">&nbsp;</td></tr>'}
                           </table>
@@ -199,7 +225,7 @@ ${cellContent || '                            <tr><td style="padding:0;margin:0"
     const mobileClasses = this.getMobileClasses(block);
 
     const bgImageStyle = block.bgImage ? `background-image:url(${block.bgImage});background-size:cover;background-position:center;` : '';
-    const borderStyle = block.border ? `border:${block.border};` : '';
+    const borderStyle = Utils.getBorderStyle(block);
     const radiusStyle = block.borderRadius && block.borderRadius !== '0px' ? `border-radius:${block.borderRadius};overflow:hidden;` : '';
     const wrapperStyle = `background-color:${block.bgColor || '#ffffff'};${bgImageStyle}${borderStyle}${radiusStyle}padding:${block.padding || '0'};`;
 
@@ -242,13 +268,29 @@ ${cellContent || '                            <tr><td style="padding:0;margin:0"
     const fontSize = block.fontSize || gs.fontSize;
     const lineHeight = block.lineHeight || '150%';
 
-    return `
-                            <tr class="${mc}">
-                              <td align="${block.align || 'left'}" style="${bgColor}padding:${block.padding || '10px 20px'};margin:0">
+    const borderStyle = Utils.getBorderStyle(block);
+    const radiusStyle = block.borderRadius && block.borderRadius !== '0px' ? `border-radius:${block.borderRadius};` : '';
+
+    const padding = block.padding !== undefined ? block.padding : '10px 20px';
+    let contentTd = `
+                              <td align="${block.align || 'left'}" style="${bgColor}padding:${padding};margin:0;${borderStyle}${radiusStyle}">
                                 <div style="font-family:${fontFamily};font-size:${fontSize};color:${textColor};line-height:${lineHeight};text-align:${block.align || 'left'}">
                                   ${content}
                                 </div>
-                              </td>
+                              </td>`;
+
+    if (block.margin && block.margin !== '0') {
+      contentTd = `
+                              <td align="${block.align || 'left'}" style="padding:${block.margin};margin:0;">
+                                <table cellpadding="0" cellspacing="0" width="100%" role="presentation">
+                                  <tr>${contentTd}</tr>
+                                </table>
+                              </td>`;
+    }
+
+    return `
+                            <tr class="${mc}">
+${contentTd}
                             </tr>`;
   },
 
@@ -263,14 +305,27 @@ ${cellContent || '                            <tr><td style="padding:0;margin:0"
     const linkEnd = block.link ? '</a>' : '';
     const mc = this.getMobileClasses(block);
     const bgColor = block.bgColor && block.bgColor !== 'transparent' ? `background-color:${block.bgColor};` : '';
-    const borderStyle = block.border ? `border:${block.border};` : '';
+    const borderStyle = Utils.getBorderStyle(block);
     const radiusStyle = block.borderRadius && block.borderRadius !== '0px' ? `border-radius:${block.borderRadius};` : '';
+
+    const padding = block.padding !== undefined ? block.padding : '10px 20px';
+    let contentTd = `
+                              <td align="${block.align || 'center'}" style="${bgColor}padding:${padding};margin:0;font-size:0px">
+                                ${linkStart}<img width="${width}" src="${block.src}" alt="${Utils.escapeHTML(block.alt || '')}" class="adapt-img" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;margin:0;max-width:100%;width:${width}px;${borderStyle}${radiusStyle}">${linkEnd}
+                              </td>`;
+
+    if (block.margin && block.margin !== '0') {
+      contentTd = `
+                              <td align="${block.align || 'center'}" style="padding:${block.margin};margin:0;">
+                                <table cellpadding="0" cellspacing="0" width="100%" role="presentation">
+                                  <tr>${contentTd}</tr>
+                                </table>
+                              </td>`;
+    }
 
     return `
                             <tr class="${mc}">
-                              <td align="${block.align || 'center'}" style="${bgColor}padding:${block.padding || '10px 20px'};margin:0;font-size:0px">
-                                ${linkStart}<img width="${width}" src="${block.src}" alt="${Utils.escapeHTML(block.alt || '')}" class="adapt-img" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;margin:0;max-width:100%;width:${width}px;${borderStyle}${radiusStyle}">${linkEnd}
-                              </td>
+${contentTd}
                             </tr>`;
   },
 
@@ -285,15 +340,15 @@ ${cellContent || '                            <tr><td style="padding:0;margin:0"
     const fontSize = block.fontSize || gs.buttonFontSize;
     const radius = block.borderRadius || gs.buttonBorderRadius;
     const radiusArc = parseInt(radius) > 0 ? Math.round((parseInt(radius) / 40) * 50) : 0;
-    const blockWidth = block.fullWidth ? `display:block;width:100%;` : 'display:inline-block;';
+    const blockWidth = block.fullWidth ? `display:block;width:100%;box-sizing:border-box;` : 'display:inline-block;';
     const mc = this.getMobileClasses(block);
     const fontWeight = block.fontWeight || 'bold';
     const fwNum = fontWeight === 'normal' ? '400' : '700';
-    const borderStyle = block.border ? `border:${block.border};` : '';
+    const borderStyle = Utils.getBorderStyle(block);
 
-    return `
-                            <tr class="${mc}">
-                              <td align="${block.align || 'center'}" style="padding:${block.padding || '10px 20px'};margin:0">
+    const padding = block.padding !== undefined ? block.padding : '10px 20px';
+    let contentTd = `
+                              <td align="${block.align || 'center'}" style="padding:${padding};margin:0">
                                 <!--[if mso]><a href="${href}" target="_blank" hidden>
                                   <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="${href}" style="height:40px; v-text-anchor:middle; width:200px" arcsize="${radiusArc}%" stroke="f" fillcolor="${bg}">
                                     <w:anchorlock></w:anchorlock>
@@ -303,7 +358,20 @@ ${cellContent || '                            <tr><td style="padding:0;margin:0"
                                 <!--[if !mso]><!-- --><span style="border-style:solid;border-color:${bg};background:${bg};border-width:0px;${blockWidth}border-radius:${radius};mso-hide:all;${borderStyle}">
                                   <a href="${href}" target="_blank" style="mso-style-priority:100 !important;text-decoration:none !important;mso-line-height-rule:exactly;color:${color};font-size:${fontSize};padding:12px 30px;${blockWidth}background:${bg};border-radius:${radius};font-family:${gs.fontFamily};font-weight:${fontWeight};font-style:normal;line-height:120%;text-align:center;letter-spacing:0;mso-padding-alt:0;mso-border-alt:10px solid ${bg};${borderStyle}">${btnText}</a>
                                 </span><!--<![endif]-->
-                              </td>
+                              </td>`;
+
+    if (block.margin && block.margin !== '0') {
+      contentTd = `
+                              <td align="${block.align || 'center'}" style="padding:${block.margin};margin:0;">
+                                <table cellpadding="0" cellspacing="0" width="100%" role="presentation">
+                                  <tr>${contentTd}</tr>
+                                </table>
+                              </td>`;
+    }
+
+    return `
+                            <tr class="${mc}">
+${contentTd}
                             </tr>`;
   },
 
@@ -351,7 +419,8 @@ ${cellContent || '                            <tr><td style="padding:0;margin:0"
     let icons = '';
     (block.icons || []).forEach(icon => {
       if (!icon.show) return;
-      const imgSrc = socialSvgs[icon.platform] || '';
+      const imgSrc = icon.imageUrl || socialSvgs[icon.platform] || '';
+      if (!imgSrc) return;
       icons += `
                                 <td align="center" valign="top" style="padding:0 8px;margin:0">
                                   <a target="_blank" href="${icon.url || '#'}" style="mso-line-height-rule:exactly;text-decoration:underline;color:${gs.linkColor};font-size:14px">
@@ -377,19 +446,27 @@ ${cellContent || '                            <tr><td style="padding:0;margin:0"
    */
   renderMenuEmail(block, gs) {
     let items = '';
+    const itemCount = (block.items || []).length;
+    const tdWidth = block.fullWidth && itemCount > 0 ? ` width="${Math.floor(100 / itemCount)}%"` : '';
+    
     (block.items || []).forEach((item, i) => {
       items += `
-                                <td valign="top" align="center" style="margin:0;border:0;padding:${block.padding || '10px 5px'}">
+                                <td${tdWidth} valign="top" align="center" style="margin:0;border:0;padding:${block.padding || '10px 5px'}">
                                   <a href="${item.link || '#'}" target="_blank" style="mso-line-height-rule:exactly;text-decoration:none;font-family:${block.fontFamily || gs.fontFamily};display:block;color:${block.color || '#232429'};font-size:${block.fontSize || '14px'};font-weight:600;letter-spacing:0.5px">${Utils.escapeHTML(item.text)}</a>
                                 </td>`;
     });
     const mc = this.getMobileClasses(block);
 
+    let justify = 'center';
+    if (block.fullWidth) justify = 'space-between';
+    else if (block.align === 'left') justify = 'flex-start';
+    else if (block.align === 'right') justify = 'flex-end';
+
     return `
                             <tr class="${mc}">
                               <td style="padding:0;margin:0">
                                 <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
-                                  <tr style="display:flex;justify-content:${block.align === 'left' ? 'flex-start' : block.align === 'right' ? 'flex-end' : 'center'}">${items}
+                                  <tr style="display:flex;justify-content:${justify}">${items}
                                   </tr>
                                 </table>
                               </td>

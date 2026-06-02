@@ -170,9 +170,21 @@ const EmailState = {
    * Duplicate a block
    */
   duplicateBlock(blockId) {
-    const idx = this.data.blocks.findIndex(b => b.id === blockId);
-    if (idx === -1) return;
-    const clone = Utils.deepClone(this.data.blocks[idx]);
+    let parentInfo = this.findParent(blockId);
+    let targetArray = null;
+    let idx = -1;
+
+    if (parentInfo) {
+      targetArray = parentInfo.parent.columns[parentInfo.colIndex];
+      idx = parentInfo.childIndex;
+    } else {
+      targetArray = this.data.blocks;
+      idx = targetArray.findIndex(b => b.id === blockId);
+    }
+
+    if (idx === -1 || !targetArray) return;
+
+    const clone = Utils.deepClone(targetArray[idx]);
     clone.id = Utils.generateId(clone.type);
     // Also generate new IDs for children
     if (clone.columns) {
@@ -182,10 +194,114 @@ const EmailState = {
         });
       });
     }
-    this.data.blocks.splice(idx + 1, 0, clone);
+    targetArray.splice(idx + 1, 0, clone);
     this.saveSnapshot();
     this.save();
     this.notify('blockDuplicated', clone);
+  },
+
+  moveBlockUp(blockId) {
+    let parentInfo = this.findParent(blockId);
+
+    if (parentInfo) {
+      let targetArray = parentInfo.parent.columns[parentInfo.colIndex];
+      let idx = parentInfo.childIndex;
+      
+      if (idx > 0) {
+        // Swap with previous
+        const temp = targetArray[idx];
+        targetArray[idx] = targetArray[idx - 1];
+        targetArray[idx - 1] = temp;
+      } else {
+        // Move to previous structure if possible
+        let structIdx = this.data.blocks.findIndex(b => b.id === parentInfo.parent.id);
+        if (structIdx > 0) {
+          let prevStruct = this.data.blocks[structIdx - 1];
+          let targetColIdx = Math.min(parentInfo.colIndex, prevStruct.columns.length - 1);
+          let block = targetArray.splice(idx, 1)[0];
+          prevStruct.columns[targetColIdx].push(block);
+        } else {
+          return; // nowhere to move
+        }
+      }
+    } else {
+      let targetArray = this.data.blocks;
+      let idx = targetArray.findIndex(b => b.id === blockId);
+      if (idx <= 0 || !targetArray) return;
+      // Swap with previous
+      const temp = targetArray[idx];
+      targetArray[idx] = targetArray[idx - 1];
+      targetArray[idx - 1] = temp;
+    }
+
+    this.saveSnapshot();
+    this.save();
+    this.notify('blockMoved');
+  },
+
+  moveBlockDown(blockId) {
+    let parentInfo = this.findParent(blockId);
+
+    if (parentInfo) {
+      let targetArray = parentInfo.parent.columns[parentInfo.colIndex];
+      let idx = parentInfo.childIndex;
+      
+      if (idx < targetArray.length - 1) {
+        // Swap with next
+        const temp = targetArray[idx];
+        targetArray[idx] = targetArray[idx + 1];
+        targetArray[idx + 1] = temp;
+      } else {
+        // Move to next structure if possible
+        let structIdx = this.data.blocks.findIndex(b => b.id === parentInfo.parent.id);
+        if (structIdx !== -1 && structIdx < this.data.blocks.length - 1) {
+          let nextStruct = this.data.blocks[structIdx + 1];
+          let targetColIdx = Math.min(parentInfo.colIndex, nextStruct.columns.length - 1);
+          let block = targetArray.splice(idx, 1)[0];
+          nextStruct.columns[targetColIdx].unshift(block);
+        } else {
+          return; // nowhere to move
+        }
+      }
+    } else {
+      let targetArray = this.data.blocks;
+      let idx = targetArray.findIndex(b => b.id === blockId);
+      if (idx === -1 || idx >= targetArray.length - 1 || !targetArray) return;
+      // Swap with next
+      const temp = targetArray[idx];
+      targetArray[idx] = targetArray[idx + 1];
+      targetArray[idx + 1] = temp;
+    }
+
+    this.saveSnapshot();
+    this.save();
+    this.notify('blockMoved');
+  },
+
+  /**
+   * Move block to previous column
+   */
+  moveBlockLeft(blockId) {
+    const parentInfo = this.findParent(blockId);
+    if (!parentInfo || parentInfo.colIndex <= 0) return;
+    const block = parentInfo.parent.columns[parentInfo.colIndex].splice(parentInfo.childIndex, 1)[0];
+    parentInfo.parent.columns[parentInfo.colIndex - 1].push(block);
+    this.saveSnapshot();
+    this.save();
+    this.notify('blockMoved');
+  },
+
+  /**
+   * Move block to next column
+   */
+  moveBlockRight(blockId) {
+    const parentInfo = this.findParent(blockId);
+    if (!parentInfo || parentInfo.colIndex >= parentInfo.parent.columns.length - 1) return;
+    const block = parentInfo.parent.columns[parentInfo.colIndex].splice(parentInfo.childIndex, 1)[0];
+    parentInfo.parent.columns[parentInfo.colIndex + 1].push(block);
+    this.saveSnapshot();
+    this.save();
+    this.notify('blockMoved');
   },
 
   /**

@@ -110,6 +110,9 @@ const BlocksPanel = {
           { platform: 'twitter', url: '#', show: true },
           { platform: 'instagram', url: '#', show: true },
           { platform: 'youtube', url: '#', show: true },
+          { platform: 'linkedin', url: '#', show: false },
+          { platform: 'custom 1', url: '#', imageUrl: '', show: false },
+          { platform: 'custom 2', url: '#', imageUrl: '', show: false },
         ],
         iconSize: '24px',
         align: 'center',
@@ -128,6 +131,7 @@ const BlocksPanel = {
         color: '#232429',
         align: 'center',
         padding: '10px 20px',
+        fullWidth: false,
       },
       html: {
         type: 'html',

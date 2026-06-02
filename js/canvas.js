@@ -93,19 +93,39 @@ const Canvas = {
 
     const parentInfo = EmailState.findParent(block.id);
     const parentButton = parentInfo 
-      ? `<button class="canvas-block__action-btn" data-action="select-parent" title="Select Structure">
-           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 15l-6-6-6 6"/></svg>
+      ? `<button class="canvas-block__action-btn" data-action="select-parent" title="Select Row" style="width:auto;padding:0 8px;font-size:10px;font-weight:bold;background:var(--accent-blue);color:white;border-color:var(--accent-blue);">
+           Select Row
          </button>`
       : '';
 
+    let moveLeftRight = '';
+    if (parentInfo && parentInfo.parent.columns.length > 1) {
+      if (parentInfo.colIndex > 0) {
+        moveLeftRight += `
+          <button class="canvas-block__action-btn" data-action="move-left" title="Move to Left Column">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+          </button>`;
+      }
+      if (parentInfo.colIndex < parentInfo.parent.columns.length - 1) {
+        moveLeftRight += `
+          <button class="canvas-block__action-btn" data-action="move-right" title="Move to Right Column">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </button>`;
+      }
+    }
+
     return `
       <div class="canvas-block ${selectedClass} ${hiddenClass}" data-block-id="${block.id}" data-block-type="${block.type}">
-        <div class="canvas-block__type-label">${typeLabel}</div>
+        <div class="canvas-block__type-label" style="pointer-events:auto;cursor:pointer;" title="Select ${typeLabel}">${typeLabel}</div>
         ${hiddenBadge}
         <div class="canvas-block__actions">
           ${parentButton}
-          <button class="canvas-block__action-btn" data-action="move" title="Move">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3 3-3 3"/><path d="M12 22l-3-3 3-3"/><path d="M2 12l3-3 3 3"/><path d="M22 12l-3 3-3-3"/><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+          ${moveLeftRight}
+          <button class="canvas-block__action-btn" data-action="move-up" title="Move Up">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 19V5M5 12l7-7 7 7"/></svg>
+          </button>
+          <button class="canvas-block__action-btn" data-action="move-down" title="Move Down">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
           </button>
           <button class="canvas-block__action-btn" data-action="duplicate" title="Duplicate">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
@@ -145,6 +165,9 @@ const Canvas = {
     const isMobile = viewport === 'mobile';
     const shouldStack = isMobile && block.mobileStackColumns !== false && block.layout.length > 1;
     
+    const colGapH = parseInt(block.colGapH) || 0;
+    const colGapV = parseInt(block.colGapV) || 0;
+
     let columnsHtml = '';
     block.layout.forEach((widthPct, colIdx) => {
       let cellContent = '';
@@ -163,10 +186,27 @@ const Canvas = {
           </div>`;
       }
 
+      let hPadLeft = colGapH / 2;
+      let hPadRight = colGapH / 2;
+      if (colIdx === 0) hPadLeft = 0;
+      if (colIdx === block.layout.length - 1) hPadRight = 0;
+      if (block.layout.length === 1) { hPadLeft = 0; hPadRight = 0; }
+      
+      const vPadBottom = (shouldStack && colIdx < block.layout.length - 1) ? colGapV : 0;
+      
+      const colBgColor = block[`colBg_${colIdx}`] || 'transparent';
+      const colBg = colBgColor !== 'transparent' ? `background-color:${colBgColor};` : '';
+      const colBorder = block[`colBorder_${colIdx}`] ? `border:${block[`colBorder_${colIdx}`]};` : '';
+      let colPadStr = `padding:0 ${hPadRight}px 0 ${hPadLeft}px;`;
+      if (shouldStack) colPadStr = `padding:0 0 ${vPadBottom}px 0;`;
+      if (block[`colPadding_${colIdx}`]) colPadStr = `padding:${block[`colPadding_${colIdx}`]};`;
+
+      const colStyles = `box-sizing:border-box;${colBg}${colBorder}${colPadStr}`;
+
       if (shouldStack) {
-        columnsHtml += `<div class="drop-zone-col" data-parent-id="${block.id}" data-col-index="${colIdx}" style="width:100%;padding:0;">${cellContent}</div>`;
+        columnsHtml += `<div class="drop-zone-col" data-parent-id="${block.id}" data-col-index="${colIdx}" style="width:100%;${colStyles}">${cellContent}</div>`;
       } else {
-        columnsHtml += `<td class="drop-zone-col" data-parent-id="${block.id}" data-col-index="${colIdx}" valign="top" style="width:${widthPct}%;padding:0;">${cellContent}</td>`;
+        columnsHtml += `<td class="drop-zone-col" data-parent-id="${block.id}" data-col-index="${colIdx}" valign="top" style="width:${widthPct}%;${colStyles}">${cellContent}</td>`;
       }
     });
 
@@ -179,7 +219,7 @@ const Canvas = {
       : '';
 
     const bgImageStyle = block.bgImage ? `background-image:url(${block.bgImage});background-size:cover;background-position:center;` : '';
-    const borderStyle = block.border ? `border:${block.border};` : '';
+    const borderStyle = Utils.getBorderStyle(block);
     const radiusStyle = block.borderRadius ? `border-radius:${block.borderRadius};overflow:hidden;` : '';
     const wrapperStyle = `background-color:${block.bgColor || '#ffffff'};${bgImageStyle}${borderStyle}${radiusStyle}padding:${block.padding || '0'};`;
 
@@ -189,7 +229,7 @@ const Canvas = {
 
     return `
       <div class="canvas-block ${selectedClass} ${hiddenClass || ''}" data-block-id="${block.id}" data-block-type="structure">
-        <div class="canvas-block__type-label">Structure${shouldStack ? ' (stacked)' : ''}</div>
+        <div class="canvas-block__type-label" style="pointer-events:auto;cursor:pointer;" title="Select Structure">Structure${shouldStack ? ' (stacked)' : ''}</div>
         ${hiddenBadge}
         <div class="canvas-block__actions">
           <button class="canvas-block__action-btn" data-action="duplicate" title="Duplicate">
@@ -215,8 +255,13 @@ const Canvas = {
     const fontFamily = block.fontFamily || gs.fontFamily;
     const lineHeight = block.lineHeight || '1.5';
     
+    const borderStyle = Utils.getBorderStyle(block);
+    const radiusStyle = block.borderRadius && block.borderRadius !== '0px' ? `border-radius:${block.borderRadius};` : '';
+
+    const padding = block.padding !== undefined ? block.padding : '10px 20px';
+    const marginStr = block.margin && block.margin !== '0' ? `margin:${block.margin};` : '';
     return `
-      <div style="background-color:${bgColor};padding:${block.padding || '10px 20px'};font-family:${fontFamily};font-size:${fontSize};color:${textColor};text-align:${align};line-height:${lineHeight};">
+      <div style="${marginStr}background-color:${bgColor};padding:${padding};font-family:${fontFamily};font-size:${fontSize};color:${textColor};text-align:${align};line-height:${lineHeight};${borderStyle}${radiusStyle}">
         <div class="editable-text" data-block-id="${block.id}">${block.content}</div>
       </div>`;
   },
@@ -224,7 +269,7 @@ const Canvas = {
   renderImageBlock(block) {
     const isMobile = window.App && App.currentViewport === 'mobile';
     const align = (isMobile && block.mobileAlign) ? block.mobileAlign : (block.align || 'center');
-    const borderStyle = block.border ? `border:${block.border};` : '';
+    const borderStyle = Utils.getBorderStyle(block);
     const radiusStyle = block.borderRadius && block.borderRadius !== '0px' ? `border-radius:${block.borderRadius};` : '';
     const imgStyle = `max-width:100%;width:${block.width || '100%'};display:block;margin:0 auto;${borderStyle}${radiusStyle}`;
     const src = block.src || '';
@@ -246,34 +291,38 @@ const Canvas = {
     const linkEnd = block.link ? '</a>' : '';
     const bgColor = block.bgColor && block.bgColor !== 'transparent' ? block.bgColor : 'transparent';
 
+    const padding = block.padding !== undefined ? block.padding : '10px 20px';
+    const marginStr = block.margin && block.margin !== '0' ? `margin:${block.margin};` : '';
     return `
-      <div style="background-color:${bgColor};padding:${block.padding || '10px 20px'};text-align:${align};">
-        ${linkStart}<img src="${src}" alt="${block.alt || ''}" style="${imgStyle}border:0;outline:none;" />${linkEnd}
+      <div style="${marginStr}background-color:${bgColor};padding:${padding};text-align:${align};">
+        ${linkStart}<img src="${src}" alt="${block.alt || ''}" style="border:0;outline:none;${imgStyle}" />${linkEnd}
       </div>`;
   },
 
   renderButtonBlock(block) {
     const isMobile = window.App && App.currentViewport === 'mobile';
+    const gs = EmailState.data.globalStyles;
     const align = (isMobile && block.mobileAlign) ? block.mobileAlign : (block.align || 'center');
-    const borderStyle = block.border ? `border:${block.border};` : '';
-    const fontWeight = block.fontWeight || 'bold';
+    const borderStyle = Utils.getBorderStyle(block);
+    const radiusStyle = block.borderRadius ? `border-radius:${block.borderRadius};` : '';
     const btnStyle = `
       display:${block.fullWidth ? 'block' : 'inline-block'};
-      background:${block.bgColor};
-      color:${block.textColor};
-      font-family:${EmailState.data.globalStyles.fontFamily};
-      font-size:${block.fontSize};
-      font-weight:${fontWeight};
+      background-color:${block.bgColor || gs.buttonBgColor};
+      color:${block.textColor || gs.buttonTextColor};
+      font-family:${block.fontFamily || gs.fontFamily};
+      font-size:${block.fontSize || gs.buttonFontSize};
+      font-weight:${block.fontWeight || 'bold'};
       text-decoration:none;
-      padding:12px 30px;
-      border-radius:${block.borderRadius};
-      text-align:center;
+      padding:12px 24px;
       ${borderStyle}
+      ${radiusStyle}
       ${block.fullWidth ? 'width:100%;box-sizing:border-box;' : ''}
     `.replace(/\n/g, '');
 
+    const padding = block.padding !== undefined ? block.padding : '10px 20px';
+    const marginStr = block.margin && block.margin !== '0' ? `margin:${block.margin};` : '';
     return `
-      <div style="padding:${block.padding || '10px 20px'};text-align:${align};">
+      <div style="${marginStr}padding:${padding};text-align:${align};">
         <a href="${block.link || '#'}" target="_blank" style="${btnStyle}">${block.text}</a>
       </div>`;
   },
@@ -310,12 +359,20 @@ const Canvas = {
     (block.icons || []).forEach(icon => {
       if (!icon.show) return;
       const size = parseInt(block.iconSize) || 24;
-      icons += `
-        <a href="${icon.url || '#'}" target="_blank" style="display:inline-block;margin:0 8px;text-decoration:none;">
-          <div style="width:${size + 12}px;height:${size + 12}px;background:${socialColors[icon.platform] || '#333'};border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:${Math.floor(size * 0.55)}px;font-weight:bold;font-family:Arial,sans-serif;line-height:1;">
-            ${socialIcons[icon.platform] || '?'}
-          </div>
-        </a>`;
+      
+      if (icon.imageUrl) {
+        icons += `
+          <a href="${icon.url || '#'}" target="_blank" style="display:inline-block;margin:0 8px;text-decoration:none;">
+            <img src="${icon.imageUrl}" width="${size}" height="${size}" style="border:0;display:block;outline:none;" />
+          </a>`;
+      } else {
+        icons += `
+          <a href="${icon.url || '#'}" target="_blank" style="display:inline-block;margin:0 8px;text-decoration:none;">
+            <div style="width:${size + 12}px;height:${size + 12}px;background:${socialColors[icon.platform] || '#333'};border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:${Math.floor(size * 0.55)}px;font-weight:bold;font-family:Arial,sans-serif;line-height:1;">
+              ${socialIcons[icon.platform] || '?'}
+            </div>
+          </a>`;
+      }
     });
 
     return `<div style="padding:${block.padding || '15px 20px'};text-align:${block.align || 'center'};">${icons}</div>`;
@@ -324,10 +381,16 @@ const Canvas = {
   renderMenuBlock(block) {
     let items = '';
     (block.items || []).forEach((item, i) => {
-      if (i > 0) items += '<span style="color:#ccc;margin:0 5px;">|</span>';
-      items += `<a href="${item.link || '#'}" target="_blank" style="font-family:${block.fontFamily || 'Arial'};font-size:${block.fontSize || '14px'};color:${block.color || '#232429'};text-decoration:none;font-weight:600;letter-spacing:0.5px;">${item.text}</a>`;
+      if (i > 0 && !block.fullWidth) items += '<span style="color:#ccc;margin:0 5px;">|</span>';
+      const flexStyle = block.fullWidth ? 'flex:1;text-align:center;' : '';
+      items += `<a href="${item.link || '#'}" target="_blank" style="font-family:${block.fontFamily || 'Arial'};font-size:${block.fontSize || '14px'};color:${block.color || '#232429'};text-decoration:none;font-weight:600;letter-spacing:0.5px;${flexStyle}">${item.text}</a>`;
     });
-    return `<div style="padding:${block.padding || '10px 20px'};text-align:${block.align || 'center'};">${items}</div>`;
+    
+    const containerStyle = block.fullWidth
+      ? `padding:${block.padding || '10px 20px'};display:flex;justify-content:space-between;width:100%;box-sizing:border-box;`
+      : `padding:${block.padding || '10px 20px'};text-align:${block.align || 'center'};`;
+      
+    return `<div style="${containerStyle}">${items}</div>`;
   },
 
   renderHtmlBlock(block) {
@@ -376,9 +439,17 @@ const Canvas = {
           case 'duplicate':
             EmailState.duplicateBlock(blockId);
             break;
-          case 'move':
-            // Just select it for now - dragging handles reorder
-            EmailState.selectBlock(blockId);
+          case 'move-up':
+            EmailState.moveBlockUp(blockId);
+            break;
+          case 'move-down':
+            EmailState.moveBlockDown(blockId);
+            break;
+          case 'move-left':
+            EmailState.moveBlockLeft(blockId);
+            break;
+          case 'move-right':
+            EmailState.moveBlockRight(blockId);
             break;
           case 'select-parent':
             const parent = EmailState.findParent(blockId);
@@ -395,6 +466,10 @@ const Canvas = {
       el.addEventListener('dblclick', (e) => {
         e.stopPropagation();
         el.contentEditable = 'true';
+        
+        // Disable drag on ALL blocks while editing so text selection works globally
+        document.querySelectorAll('.canvas-block').forEach(b => b.draggable = false);
+        
         el.focus();
 
         // Select all text on first double-click
@@ -407,6 +482,10 @@ const Canvas = {
 
       el.addEventListener('blur', () => {
         el.contentEditable = 'false';
+        
+        // Re-enable drag
+        document.querySelectorAll('.canvas-block[data-drag-bound="true"]').forEach(b => b.draggable = true);
+        
         const blockId = el.dataset.blockId;
         const content = el.innerHTML;
         
@@ -434,6 +513,17 @@ const Canvas = {
     });
   },
 
+  updateSelectionClasses() {
+    const selectedId = EmailState.data.selectedBlockId;
+    document.querySelectorAll('.canvas-block').forEach(el => {
+      if (el.dataset.blockId === selectedId) {
+        el.classList.add('canvas-block--selected');
+      } else {
+        el.classList.remove('canvas-block--selected');
+      }
+    });
+  },
+
   /**
    * Initialize
    */
@@ -447,9 +537,38 @@ const Canvas = {
       });
     }
 
+    const canvasEmail = document.getElementById('canvas-email');
+    if (canvasEmail) {
+      canvasEmail.addEventListener('dblclick', (e) => {
+        const selectedBlockId = EmailState.data.selectedBlockId;
+        if (!selectedBlockId) return;
+        
+        // If a block was just selected on the first click, its DOM node was replaced.
+        // We catch the dblclick here on the parent container.
+        const blockEl = canvasEmail.querySelector(`.canvas-block[data-block-id="${selectedBlockId}"]`);
+        if (!blockEl) return;
+        
+        const editable = blockEl.querySelector('.editable-text');
+        if (editable && editable.contentEditable !== 'true') {
+          editable.contentEditable = 'true';
+          document.querySelectorAll('.canvas-block').forEach(b => b.draggable = false);
+          editable.focus();
+          const range = document.createRange();
+          range.selectNodeContents(editable);
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      });
+    }
+
     // Listen for state changes
     EmailState.on((changeType) => {
-      this.render();
+      if (changeType === 'blockSelected' || changeType === 'blockDeselected') {
+        this.updateSelectionClasses();
+      } else {
+        this.render();
+      }
     });
   }
 };
