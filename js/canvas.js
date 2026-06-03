@@ -192,6 +192,11 @@ const Canvas = {
       if (colIdx === block.layout.length - 1) hPadRight = 0;
       if (block.layout.length === 1) { hPadLeft = 0; hPadRight = 0; }
       
+      if (isMobile) {
+        hPadLeft = 0;
+        hPadRight = 0;
+      }
+      
       const vPadBottom = (shouldStack && colIdx < block.layout.length - 1) ? colGapV : 0;
       
       const colBgColor = block[`colBg_${colIdx}`] || 'transparent';
@@ -221,7 +226,7 @@ const Canvas = {
     const bgImageStyle = block.bgImage ? `background-image:url(${block.bgImage});background-size:cover;background-position:center;` : '';
     const borderStyle = Utils.getBorderStyle(block);
     const radiusStyle = block.borderRadius ? `border-radius:${block.borderRadius};overflow:hidden;` : '';
-    const wrapperStyle = `background-color:${block.bgColor || '#ffffff'};${bgImageStyle}${borderStyle}${radiusStyle}padding:${block.padding || '0'};`;
+    const wrapperStyle = `background-color:${block.bgColor || '#ffffff'};${bgImageStyle}${borderStyle}${radiusStyle}padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '0'};`;
 
     const layoutHtml = shouldStack
       ? `<div style="display:flex;flex-direction:column;${wrapperStyle}">${columnsHtml}</div>`
@@ -258,8 +263,8 @@ const Canvas = {
     const borderStyle = Utils.getBorderStyle(block);
     const radiusStyle = block.borderRadius && block.borderRadius !== '0px' ? `border-radius:${block.borderRadius};` : '';
 
-    const padding = block.padding !== undefined ? block.padding : '10px 20px';
-    const marginStr = block.margin && block.margin !== '0' ? `margin:${block.margin};` : '';
+    const padding = (isMobile && block.mobilePadding ? block.mobilePadding : block.padding) !== undefined ? (isMobile && block.mobilePadding ? block.mobilePadding : block.padding) : '10px 20px';
+    const marginStr = (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) && (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) !== '0' ? `margin:${(isMobile && block.mobileMargin ? block.mobileMargin : block.margin)};` : '';
     return `
       <div style="${marginStr}background-color:${bgColor};padding:${padding};font-family:${fontFamily};font-size:${fontSize};color:${textColor};text-align:${align};line-height:${lineHeight};${borderStyle}${radiusStyle}">
         <div class="editable-text" data-block-id="${block.id}">${block.content}</div>
@@ -277,7 +282,7 @@ const Canvas = {
     if (!src) {
       const bgColor = block.bgColor && block.bgColor !== 'transparent' ? block.bgColor : 'transparent';
       return `
-        <div style="background-color:${bgColor};padding:${block.padding || '10px 20px'};text-align:${align};">
+        <div style="background-color:${bgColor};padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '10px 20px'};text-align:${align};">
           <div style="background:#f0f0f0;border:2px dashed #ccc;padding:40px 20px;text-align:center;border-radius:4px;">
             <svg style="width:32px;height:32px;color:#aaa;margin-bottom:8px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/>
@@ -291,8 +296,8 @@ const Canvas = {
     const linkEnd = block.link ? '</a>' : '';
     const bgColor = block.bgColor && block.bgColor !== 'transparent' ? block.bgColor : 'transparent';
 
-    const padding = block.padding !== undefined ? block.padding : '10px 20px';
-    const marginStr = block.margin && block.margin !== '0' ? `margin:${block.margin};` : '';
+    const padding = (isMobile && block.mobilePadding ? block.mobilePadding : block.padding) !== undefined ? (isMobile && block.mobilePadding ? block.mobilePadding : block.padding) : '10px 20px';
+    const marginStr = (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) && (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) !== '0' ? `margin:${(isMobile && block.mobileMargin ? block.mobileMargin : block.margin)};` : '';
     return `
       <div style="${marginStr}background-color:${bgColor};padding:${padding};text-align:${align};">
         ${linkStart}<img src="${src}" alt="${block.alt || ''}" style="border:0;outline:none;${imgStyle}" />${linkEnd}
@@ -319,8 +324,8 @@ const Canvas = {
       ${block.fullWidth ? 'width:100%;box-sizing:border-box;' : ''}
     `.replace(/\n/g, '');
 
-    const padding = block.padding !== undefined ? block.padding : '10px 20px';
-    const marginStr = block.margin && block.margin !== '0' ? `margin:${block.margin};` : '';
+    const padding = (isMobile && block.mobilePadding ? block.mobilePadding : block.padding) !== undefined ? (isMobile && block.mobilePadding ? block.mobilePadding : block.padding) : '10px 20px';
+    const marginStr = (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) && (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) !== '0' ? `margin:${(isMobile && block.mobileMargin ? block.mobileMargin : block.margin)};` : '';
     return `
       <div style="${marginStr}padding:${padding};text-align:${align};">
         <a href="${block.link || '#'}" target="_blank" style="${btnStyle}">${block.text}</a>
@@ -328,17 +333,20 @@ const Canvas = {
   },
 
   renderDividerBlock(block) {
+    const isMobile = window.App && App.currentViewport === 'mobile';
     return `
-      <div style="padding:${block.padding || '10px 20px'};">
+      <div style="padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '10px 20px'};">
         <hr style="border:none;border-top:${block.thickness} ${block.style} ${block.color};width:${block.width};margin:0 auto;" />
       </div>`;
   },
 
   renderSpacerBlock(block) {
+    const isMobile = window.App && App.currentViewport === 'mobile';
     return `<div style="height:${block.height};line-height:${block.height};font-size:1px;">&nbsp;</div>`;
   },
 
   renderSocialBlock(block) {
+    const isMobile = window.App && App.currentViewport === 'mobile';
     const socialIcons = {
       facebook: 'F',
       twitter: '𝕏',
@@ -375,10 +383,11 @@ const Canvas = {
       }
     });
 
-    return `<div style="padding:${block.padding || '15px 20px'};text-align:${block.align || 'center'};">${icons}</div>`;
+    return `<div style="padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '15px 20px'};text-align:${block.align || 'center'};">${icons}</div>`;
   },
 
   renderMenuBlock(block) {
+    const isMobile = window.App && App.currentViewport === 'mobile';
     const gs = EmailState.data.globalStyles;
     let items = '';
     (block.items || []).forEach((item, i) => {
@@ -388,14 +397,15 @@ const Canvas = {
     });
     
     const containerStyle = block.fullWidth
-      ? `padding:${block.padding || '10px 20px'};display:flex;justify-content:space-between;width:100%;box-sizing:border-box;`
-      : `padding:${block.padding || '10px 20px'};text-align:${block.align || 'center'};`;
+      ? `padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '10px 20px'};display:flex;justify-content:space-between;width:100%;box-sizing:border-box;`
+      : `padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '10px 20px'};text-align:${block.align || 'center'};`;
       
     return `<div style="${containerStyle}">${items}</div>`;
   },
 
   renderHtmlBlock(block) {
-    return `<div style="padding:${block.padding || '0'};">${block.code}</div>`;
+    const isMobile = window.App && App.currentViewport === 'mobile';
+    return `<div style="padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '0'};">${block.code}</div>`;
   },
 
   /**

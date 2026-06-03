@@ -5,6 +5,7 @@
 const EmailState = {
   // Current state
   data: {
+    templateId: null,
     templateName: 'My Newsletter',
     subjectLine: '',
     previewText: '',
@@ -532,6 +533,78 @@ const EmailState = {
       }
     }
     return null;
+  },
+
+  // ---- Template Storage / Gallery ----
+
+  saveToGallery() {
+    if (!this.data.templateId) {
+      this.data.templateId = Utils.generateId('tpl');
+    }
+    
+    const templates = this.getGalleryTemplates();
+    const existingIdx = templates.findIndex(t => t.id === this.data.templateId);
+    
+    const snapshot = Utils.deepClone(this.data);
+    delete snapshot.selectedBlockId;
+
+    const templateMeta = {
+      id: this.data.templateId,
+      name: this.data.templateName,
+      date: new Date().getTime(),
+      data: snapshot
+    };
+
+    if (existingIdx !== -1) {
+      templates[existingIdx] = templateMeta;
+    } else {
+      templates.push(templateMeta);
+    }
+    
+    localStorage.setItem('emailBuilderTemplates', JSON.stringify(templates));
+    this.save();
+    return true;
+  },
+
+  getGalleryTemplates() {
+    return JSON.parse(localStorage.getItem('emailBuilderTemplates') || '[]').sort((a,b) => b.date - a.date);
+  },
+
+  loadFromGallery(id) {
+    const templates = this.getGalleryTemplates();
+    const tpl = templates.find(t => t.id === id);
+    if (tpl) {
+      this.data = { ...Utils.deepClone(tpl.data), selectedBlockId: null };
+      this.history = [];
+      this.historyIndex = -1;
+      this.saveSnapshot();
+      this.save();
+      this.notify('reset');
+      return true;
+    }
+    return false;
+  },
+
+  deleteFromGallery(id) {
+    let templates = this.getGalleryTemplates();
+    templates = templates.filter(t => t.id !== id);
+    localStorage.setItem('emailBuilderTemplates', JSON.stringify(templates));
+    
+    if (this.data.templateId === id) {
+      this.data.templateId = null;
+      this.save();
+    }
+  },
+
+  startNewTemplate() {
+    this.reset();
+    this.data.templateId = Utils.generateId('tpl');
+    this.data.templateName = 'New Template';
+    this.history = [];
+    this.historyIndex = -1;
+    this.saveSnapshot();
+    this.save();
+    this.notify('reset');
   }
 };
 

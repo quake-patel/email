@@ -25,6 +25,13 @@
           <span>MailCraft</span>
         </div>
 
+        <button class="toolbar-btn" id="btn-templates" style="margin-left:10px; padding:4px 8px;" title="My Templates">
+          <svg style="width:16px;height:16px;margin-right:4px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 22h14a2 2 0 0 0 2-2V7.5L14.5 2H6a2 2 0 0 0-2 2v4"/><polyline points="14 2 14 8 20 8"/><path d="M3 15h6"/><path d="M3 18h6"/></svg>
+          Templates
+        </button>
+
+        <div class="toolbar__divider"></div>
+
         <!-- Template Name -->
         <div class="toolbar__template-name">
           <svg style="width:14px;height:14px;flex-shrink:0;opacity:0.5;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -45,6 +52,12 @@
         </button>
 
         <div class="toolbar__divider"></div>
+
+        <!-- Save -->
+        <button class="toolbar-btn" id="btn-save" title="Save Template">
+          <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+          <span>Save</span>
+        </button>
 
         <!-- Clear -->
         <button class="toolbar-btn" id="btn-clear" title="Clear all blocks">
@@ -102,6 +115,16 @@
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
               Preview in Tab
             </button>
+            <div style="height:1px;background:#eee;margin:4px 0;"></div>
+            <button class="export-dropdown__item" id="export-save-json">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
+              Save as JSON
+            </button>
+            <label class="export-dropdown__item" style="cursor:pointer;" for="import-json-input">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+              Load JSON
+            </label>
+            <input type="file" id="import-json-input" accept=".json" style="display:none;">
           </div>
         </div>
       </div>
@@ -178,10 +201,30 @@
     </div>
   </div>
 
+  <!-- ======================== TEMPLATES MODAL ======================== -->
+  <div class="modal-overlay" id="templates-modal">
+    <div class="modal" style="width: 500px; max-width: 90vw;">
+      <div class="modal__header">
+        <h2 class="modal__title">Stored Templates</h2>
+        <button class="modal__close" id="templates-modal-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal__body" style="max-height: 400px; overflow-y: auto;" id="templates-list-container">
+        <!-- Rendered via JS -->
+      </div>
+      <div class="modal__footer">
+        <button class="btn btn--secondary" id="btn-new-template">Create New Blank Template</button>
+        <button class="btn btn--primary" id="templates-modal-done">Done</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ======================== TOAST CONTAINER ======================== -->
   <div class="toast-container" id="toast-container"></div>
 
   <!-- ======================== SCRIPTS ======================== -->
+  <script src="js/seed.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/state.js"></script>
   <script src="js/blocks-panel.js"></script>

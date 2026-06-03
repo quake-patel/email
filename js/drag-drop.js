@@ -81,10 +81,29 @@ const DragDrop = {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
 
-    // Find nearest drop zone
-    const dropZone = e.target.closest('.drop-zone');
-    const dropZoneCol = e.target.closest('.drop-zone-col');
+    const isStructure = e.dataTransfer.types.includes('application/x-structure-id') || e.dataTransfer.types.includes('application/x-reorder');
+
+    let dropZone = e.target.closest('.drop-zone');
+    let dropZoneCol = isStructure ? null : e.target.closest('.drop-zone-col');
     const emptyCanvas = e.target.closest('#canvas-drop-empty');
+
+    if (!dropZone && !dropZoneCol && !emptyCanvas) {
+      const zones = Array.from(document.querySelectorAll('.drop-zone'));
+      let closestZone = null;
+      let minDistance = Infinity;
+      zones.forEach(zone => {
+        const rect = zone.getBoundingClientRect();
+        const zoneY = rect.top + rect.height / 2;
+        const distance = Math.abs(e.clientY - zoneY);
+        // Add a threshold so it only snaps if reasonably close, 
+        // but for structures we can snap anywhere if they are not over emptyCanvas
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestZone = zone;
+        }
+      });
+      if (closestZone) dropZone = closestZone;
+    }
 
     // Clear previous active zones
     document.querySelectorAll('.drop-zone--active, .drop-zone--hover').forEach(z => {
@@ -92,19 +111,12 @@ const DragDrop = {
     });
 
     if (dropZone) {
-      dropZone.classList.add('drop-zone--hover');
+      dropZone.classList.add('drop-zone--active', 'drop-zone--hover');
     } else if (dropZoneCol) {
       dropZoneCol.classList.add('drop-zone--hover');
     } else if (emptyCanvas) {
       emptyCanvas.style.outline = '2px dashed var(--accent-green)';
       emptyCanvas.style.outlineOffset = '-2px';
-    }
-
-    // Activate all drop zones to show where blocks can go
-    if (!dropZone && !dropZoneCol && !emptyCanvas) {
-      document.querySelectorAll('.drop-zone, .drop-zone-col').forEach(z => {
-        z.classList.add('drop-zone--active');
-      });
     }
   },
 
@@ -135,11 +147,30 @@ const DragDrop = {
     e.preventDefault();
     this.clearDropZones();
 
+    const isStructure = e.dataTransfer.types.includes('application/x-structure-id');
     const emptyCanvas = e.target.closest('#canvas-drop-empty');
+
+    let dropZone = e.target.closest('.drop-zone');
+    let dropZoneCol = isStructure ? null : e.target.closest('.drop-zone-col');
+
+    if (!dropZone && !dropZoneCol && !emptyCanvas) {
+      const zones = Array.from(document.querySelectorAll('.drop-zone'));
+      let closestZone = null;
+      let minDistance = Infinity;
+      zones.forEach(zone => {
+        const rect = zone.getBoundingClientRect();
+        const zoneY = rect.top + rect.height / 2;
+        const distance = Math.abs(e.clientY - zoneY);
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestZone = zone;
+        }
+      });
+      if (closestZone) dropZone = closestZone;
+    }
 
     // Determine drop index
     let dropIndex = -1;
-    const dropZone = e.target.closest('.drop-zone');
     if (dropZone) {
       dropIndex = parseInt(dropZone.dataset.dropIndex);
     } else if (emptyCanvas) {
@@ -152,7 +183,6 @@ const DragDrop = {
     const reorderIdx = e.dataTransfer.getData('application/x-reorder');
 
     // Handle drop into a column
-    const dropZoneCol = e.target.closest('.drop-zone-col');
     if (dropZoneCol) {
       const parentId = dropZoneCol.dataset.parentId;
       const colIndex = parseInt(dropZoneCol.dataset.colIndex);

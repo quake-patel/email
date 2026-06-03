@@ -73,6 +73,8 @@ const ExportEngine = {
       .es-mobile-only { display: table-row !important; }
       .es-m-hide { display: none !important; max-height: 0 !important; overflow: hidden !important; mso-hide: all !important; }
       .es-m-stack .es-m-stack-col { display: block !important; width: 100% !important; max-width: 100% !important; }
+      .es-m-stack .es-m-col-inner { width: 100% !important; max-width: 100% !important; }
+      .es-m-col-pad { padding-left: 0 !important; padding-right: 0 !important; }
 ${this.generatePerBlockMobileCss(blocks, width)}
     }
     /* Width containment */
@@ -89,7 +91,7 @@ ${this.generatePerBlockMobileCss(blocks, width)}
         <td valign="top" style="padding:0;Margin:0">
           <table cellpadding="0" cellspacing="0" align="center" class="es-content" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important">
             <tr>
-              <td align="center" style="padding:0;Margin:0">
+              <td class="es-p-td" align="center" style="padding:0;Margin:0">
                 <table bgcolor="#ffffff" align="center" cellpadding="0" cellspacing="0" class="es-content-body" width="${width}" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:#ffffff;width:${width}px;max-width:${width}px;table-layout:fixed" role="none">
 ${bodyContent}
                 </table>
@@ -119,6 +121,13 @@ ${bodyContent}
       }
       
       // Mobile alignment override
+      if (block.mobilePadding) {
+        css += `      .es-b-${block.id} .es-p-td { padding: ${block.mobilePadding} !important; }\n`;
+      }
+      if (block.mobileMargin) {
+        css += `      .es-b-${block.id} .es-m-td { padding: ${block.mobileMargin} !important; }\n`;
+      }
+      
       if (block.mobileAlign) {
         css += `      .es-b-${block.id} td, .es-b-${block.id} div { text-align: ${block.mobileAlign} !important; }\n`;
       }
@@ -223,8 +232,8 @@ ${bodyContent}
                         <td valign="top" align="left" width="${colWidth}" class="es-m-stack-col es-col-${colIdx}${vPadClass}" style="${colStyles}">
                           <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;">
                             <tr>
-                              <td style="${colPadStr}${colBg}${colBorder}">
-                                <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;max-width:${colWidth}px;table-layout:fixed">
+                              <td class="es-m-col-pad" style="${colPadStr}${colBg}${colBorder}">
+                                <table class="es-m-col-inner" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;max-width:${colWidth}px;table-layout:fixed">
 ${cellContent || '                                  <tr><td style="padding:0;Margin:0">&nbsp;</td></tr>'}
                                 </table>
                               </td>
@@ -244,7 +253,7 @@ ${cellContent || '                                  <tr><td style="padding:0;Mar
     if (block.layout.length > 1) {
       return `
                   <tr class="${mobileClasses}">
-                    <td align="left" style="Margin:0;${wrapperStyle}">
+                    <td class="es-p-td" align="left" style="Margin:0;${wrapperStyle}">
                       <!--[if mso]><table style="width:${innerWidth}px" cellpadding="0" cellspacing="0"><tr>${block.layout.map((w, i) => `<td style="width:${Math.floor(innerWidth * w / 100)}px" valign="top">`).join('')}<!--<![endif]-->
                       <table cellpadding="0" cellspacing="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;max-width:${innerWidth}px;table-layout:fixed">
                         <tr>${cols}
@@ -257,7 +266,7 @@ ${cellContent || '                                  <tr><td style="padding:0;Mar
 
     return `
                   <tr class="${mobileClasses}">
-                    <td align="left" style="Margin:0;${wrapperStyle}">
+                    <td class="es-p-td" align="left" style="Margin:0;${wrapperStyle}">
                       <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;max-width:${innerWidth}px;table-layout:fixed">
                         <tr>${cols}
                         </tr>
@@ -294,7 +303,7 @@ ${cellContent || '                                  <tr><td style="padding:0;Mar
 
     const padding = block.padding !== undefined ? block.padding : '10px 20px';
     let contentTd = `
-                              <td align="${align}" style="${bgColor}padding:${padding};Margin:0;${borderStyle}${radiusStyle}">
+                              <td class="es-p-td" align="${align}" style="${bgColor}padding:${padding};Margin:0;${borderStyle}${radiusStyle}">
                                 <div style="font-family:${fontFamily};font-size:${fontSize};color:${textColor};line-height:${lineHeight};text-align:${align}">
                                   ${content}
                                 </div>
@@ -302,7 +311,7 @@ ${cellContent || '                                  <tr><td style="padding:0;Mar
 
     if (block.margin && block.margin !== '0') {
       contentTd = `
-                              <td align="${align}" style="padding:${block.margin};Margin:0;">
+                              <td class="es-m-td" align="${align}" style="padding:${block.margin};Margin:0;">
                                 <table cellpadding="0" cellspacing="0" width="100%" role="presentation">
                                   <tr>${contentTd}</tr>
                                 </table>
@@ -331,13 +340,13 @@ ${contentTd}
 
     const padding = block.padding !== undefined ? block.padding : '10px 20px';
     let contentTd = `
-                              <td align="${block.align || 'center'}" style="${bgColor}padding:${padding};Margin:0;font-size:0px">
+                              <td class="es-p-td" align="${block.align || 'center'}" style="${bgColor}padding:${padding};Margin:0;font-size:0px">
                                 ${linkStart}<img width="${width}" src="${block.src}" alt="${Utils.escapeHTML(block.alt || '')}" class="adapt-img" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;Margin:0;max-width:100%;width:${width}px;${borderStyle}${radiusStyle}">${linkEnd}
                               </td>`;
 
     if (block.margin && block.margin !== '0') {
       contentTd = `
-                              <td align="${block.align || 'center'}" style="padding:${block.margin};Margin:0;">
+                              <td class="es-m-td" align="${block.align || 'center'}" style="padding:${block.margin};Margin:0;">
                                 <table cellpadding="0" cellspacing="0" width="100%" role="presentation">
                                   <tr>${contentTd}</tr>
                                 </table>
@@ -372,10 +381,10 @@ ${contentTd}
 
     const padding = block.padding !== undefined ? block.padding : '10px 20px';
     let contentTd = `
-                              <td align="${block.align || 'center'}" style="padding:${padding};Margin:0;text-align:${block.align || 'center'}">
+                              <td class="es-p-td" align="${block.align || 'center'}" style="padding:${padding};Margin:0;text-align:${block.align || 'center'}">
                                 <table ${tableWidth} align="${block.align || 'center'}" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;">
                                   <tr>
-                                    <td align="center" style="Margin:0;padding:0;">
+                                    <td class="es-p-td" align="center" style="Margin:0;padding:0;">
                                       <!--[if mso]><a href="${href}" target="_blank" hidden>
                                         <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="${href}" style="height:40px; v-text-anchor:middle; width:${vmlWidth}" arcsize="${radiusArc}%" stroke="f" fillcolor="${bg}">
                                           <w:anchorlock></w:anchorlock>
@@ -392,7 +401,7 @@ ${contentTd}
 
     if (block.margin && block.margin !== '0') {
       contentTd = `
-                              <td align="${block.align || 'center'}" style="padding:${block.margin};Margin:0;">
+                              <td class="es-m-td" align="${block.align || 'center'}" style="padding:${block.margin};Margin:0;">
                                 <table cellpadding="0" cellspacing="0" width="100%" role="presentation">
                                   <tr>${contentTd}</tr>
                                 </table>
@@ -412,7 +421,7 @@ ${contentTd}
     const mc = this.getMobileClasses(block);
     return `
                             <tr class="${mc}">
-                              <td align="center" style="padding:${block.padding || '10px 20px'};Margin:0;font-size:0">
+                              <td class="es-p-td" align="center" style="padding:${block.padding || '10px 20px'};Margin:0;font-size:0">
                                 <table width="${block.width || '100%'}" height="100%" cellpadding="0" cellspacing="0" border="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
                                   <tr>
                                     <td style="padding:0;Margin:0;width:100%;border-bottom:${block.thickness || '1px'} ${block.style || 'solid'} ${block.color || '#cccccc'};height:0px"></td>
@@ -452,7 +461,7 @@ ${contentTd}
       const imgSrc = icon.imageUrl || socialSvgs[icon.platform] || '';
       if (!imgSrc) return;
       icons += `
-                                <td align="center" valign="top" style="padding:0 8px;Margin:0">
+                                <td class="es-p-td" align="center" valign="top" style="padding:0 8px;Margin:0">
                                   <a target="_blank" href="${icon.url || '#'}" style="mso-line-height-rule:exactly;text-decoration:underline;color:${gs.linkColor};font-size:14px">
                                     <img width="${size}" height="${size}" src="${imgSrc}" alt="${icon.platform}" title="${icon.platform}" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;Margin:0">
                                   </a>
@@ -462,7 +471,7 @@ ${contentTd}
 
     return `
                             <tr class="${mc}">
-                              <td align="${block.align || 'center'}" style="padding:${block.padding || '15px 20px'};Margin:0;font-size:0px">
+                              <td class="es-p-td" align="${block.align || 'center'}" style="padding:${block.padding || '15px 20px'};Margin:0;font-size:0px">
                                 <table align="${block.align || 'center'}" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
                                   <tr>${icons}
                                   </tr>
@@ -563,6 +572,51 @@ ${contentTd}
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
+  },
+
+  /**
+   * Download template as JSON
+   */
+  downloadJson() {
+    const data = JSON.stringify(EmailState.data, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${EmailState.data.templateName.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_template.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    Utils.showToast('Template JSON downloaded!', 'success');
+  },
+
+  /**
+   * Import template from JSON file
+   */
+  importJson(file) {
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target.result);
+        if (json && typeof json === 'object') {
+          EmailState.data = { ...EmailState.data, ...json };
+          EmailState.data.selectedBlockId = null;
+          EmailState.saveSnapshot();
+          EmailState.save();
+          
+          if (window.Canvas) Canvas.render();
+          const nameInput = document.getElementById('template-name-input');
+          if (nameInput) nameInput.value = EmailState.data.templateName;
+          
+          Utils.showToast('Template loaded successfully!', 'success');
+        }
+      } catch (err) {
+        Utils.showToast('Invalid template file', 'error');
+      }
+    };
+    reader.readAsText(file);
   },
 
   /**

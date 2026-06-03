@@ -685,6 +685,17 @@ const PropertiesPanel = {
     if (['text', 'image', 'button'].includes(block.type)) {
       extraSettings += this.renderAlignmentRow(block.mobileAlign || '', 'mobileAlign');
     }
+    
+    // All blocks: mobile padding and margin
+    extraSettings += `
+      <div class="prop-row">
+        <span class="prop-row__label">Padding</span>
+        <input class="prop-input prop-input--md" type="text" value="${block.mobilePadding || ''}" data-prop="mobilePadding" placeholder="Inherit" />
+      </div>
+      <div class="prop-row">
+        <span class="prop-row__label">Margin</span>
+        <input class="prop-input prop-input--md" type="text" value="${block.mobileMargin || ''}" data-prop="mobileMargin" placeholder="Inherit" />
+      </div>`;
 
     return `
       <div class="accordion">

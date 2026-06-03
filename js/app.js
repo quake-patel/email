@@ -31,6 +31,9 @@ const App = {
     // 7. Bind code modal
     this.bindCodeModal();
 
+    // 7.5 Bind templates modal
+    this.bindTemplatesModal();
+
     // 8. Bind responsive preview toggle
     this.bindResponsiveToggle();
 
@@ -75,6 +78,12 @@ const App = {
     // Code view
     document.getElementById('btn-code')?.addEventListener('click', () => {
       ExportEngine.showCodeView();
+    });
+
+    // Save
+    document.getElementById('btn-save')?.addEventListener('click', () => {
+      EmailState.saveToGallery();
+      Utils.showToast('Template stored successfully', 'success');
     });
 
     // Clear all
@@ -184,6 +193,109 @@ const App = {
       ExportEngine.previewInTab();
       dropdown.classList.remove('export-dropdown--visible');
     });
+
+    document.getElementById('export-save-json')?.addEventListener('click', () => {
+      ExportEngine.downloadJson();
+      dropdown.classList.remove('export-dropdown--visible');
+    });
+
+    document.getElementById('import-json-input')?.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        ExportEngine.importJson(file);
+      }
+      dropdown.classList.remove('export-dropdown--visible');
+      // Reset input so it can be loaded again
+      e.target.value = '';
+    });
+  },
+
+  /**
+   * Bind templates modal
+   */
+  bindTemplatesModal() {
+    const modal = document.getElementById('templates-modal');
+    const container = document.getElementById('templates-list-container');
+    const nameInput = document.getElementById('template-name-input');
+
+    const openModal = () => {
+      this.renderTemplatesList(container);
+      modal?.classList.add('modal-overlay--visible');
+    };
+
+    const closeModal = () => {
+      modal?.classList.remove('modal-overlay--visible');
+    };
+
+    document.getElementById('btn-templates')?.addEventListener('click', openModal);
+    document.getElementById('templates-modal-close')?.addEventListener('click', closeModal);
+    document.getElementById('templates-modal-done')?.addEventListener('click', closeModal);
+    
+    document.getElementById('templates-modal')?.addEventListener('click', (e) => {
+      if (e.target.id === 'templates-modal') closeModal();
+    });
+
+    document.getElementById('btn-new-template')?.addEventListener('click', () => {
+      if (confirm('Create a new blank template? Unsaved changes to the current template will be lost.')) {
+        EmailState.startNewTemplate();
+        if (nameInput) nameInput.value = EmailState.data.templateName;
+        closeModal();
+        Utils.showToast('Started new template');
+      }
+    });
+
+    // Handle template actions inside modal
+    container?.addEventListener('click', (e) => {
+      const btnLoad = e.target.closest('.btn-load-template');
+      const btnDelete = e.target.closest('.btn-delete-template');
+
+      if (btnLoad) {
+        const id = btnLoad.dataset.id;
+        if (confirm('Load this template? Unsaved changes will be lost.')) {
+          EmailState.loadFromGallery(id);
+          if (nameInput) nameInput.value = EmailState.data.templateName;
+          closeModal();
+          Utils.showToast('Template loaded');
+        }
+      }
+
+      if (btnDelete) {
+        const id = btnDelete.dataset.id;
+        if (confirm('Are you sure you want to delete this template permanently?')) {
+          EmailState.deleteFromGallery(id);
+          this.renderTemplatesList(container);
+          Utils.showToast('Template deleted');
+        }
+      }
+    });
+  },
+
+  renderTemplatesList(container) {
+    if (!container) return;
+    const templates = EmailState.getGalleryTemplates();
+    if (templates.length === 0) {
+      container.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">No stored templates yet.</div>';
+      return;
+    }
+
+    container.innerHTML = templates.map(t => {
+      const d = new Date(t.date);
+      const dateStr = d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+      const isActive = t.id === EmailState.data.templateId ? '<span style="background: #2CB543; color: white; padding: 2px 6px; border-radius: 12px; font-size: 11px; margin-left: 8px;">Active</span>' : '';
+      
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee;">
+          <div>
+            <div style="font-weight: 600; color: #333;">${Utils.escapeHTML(t.name)}${isActive}</div>
+            <div style="font-size: 12px; color: #888; margin-top: 4px;">Last saved: ${dateStr}</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn--secondary btn-load-template" data-id="${t.id}">Load</button>
+            <button class="btn btn-delete-template" data-id="${t.id}" style="color: #f4001e; background: transparent; border: 1px solid #f4001e; padding: 6px 12px; border-radius: 4px; cursor: pointer;">Delete</button>
+          </div>
+        </div>
+      `;
+    }).join('');
   },
 
   /**
