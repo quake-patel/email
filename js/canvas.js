@@ -202,16 +202,19 @@ const Canvas = {
       const colBgColor = block[`colBg_${colIdx}`] || 'transparent';
       const colBg = colBgColor !== 'transparent' ? `background-color:${colBgColor};` : '';
       const colBorder = block[`colBorder_${colIdx}`] ? `border:${block[`colBorder_${colIdx}`]};` : '';
-      let colPadStr = `padding:0 ${hPadRight}px 0 ${hPadLeft}px;`;
-      if (shouldStack) colPadStr = `padding:0 0 ${vPadBottom}px 0;`;
-      if (block[`colPadding_${colIdx}`]) colPadStr = `padding:${block[`colPadding_${colIdx}`]};`;
+      
+      let gapPadStr = `padding:0 ${hPadRight}px 0 ${hPadLeft}px;`;
+      if (shouldStack) gapPadStr = `padding:0 0 ${vPadBottom}px 0;`;
+      
+      let innerPadStr = block[`colPadding_${colIdx}`] ? `padding:${block[`colPadding_${colIdx}`]};` : '';
 
-      const colStyles = `box-sizing:border-box;${colBg}${colBorder}${colPadStr}`;
+      const wrapperStyles = `box-sizing:border-box;${gapPadStr}`;
+      const innerStyles = `box-sizing:border-box;height:100%;${colBg}${colBorder}${innerPadStr}`;
 
       if (shouldStack) {
-        columnsHtml += `<div class="drop-zone-col" data-parent-id="${block.id}" data-col-index="${colIdx}" style="width:100%;${colStyles}">${cellContent}</div>`;
+        columnsHtml += `<div class="drop-zone-col" data-parent-id="${block.id}" data-col-index="${colIdx}" style="width:100%;${wrapperStyles}"><div style="${innerStyles}">${cellContent}</div></div>`;
       } else {
-        columnsHtml += `<td class="drop-zone-col" data-parent-id="${block.id}" data-col-index="${colIdx}" valign="top" style="width:${widthPct}%;${colStyles}">${cellContent}</td>`;
+        columnsHtml += `<td class="drop-zone-col" data-parent-id="${block.id}" data-col-index="${colIdx}" valign="top" style="width:${widthPct}%;${wrapperStyles}"><div style="${innerStyles}">${cellContent}</div></td>`;
       }
     });
 
@@ -415,6 +418,11 @@ const Canvas = {
     // Block selection
     document.querySelectorAll('.canvas-block').forEach(el => {
       el.addEventListener('click', (e) => {
+        // Prevent links from opening inside the builder
+        if (e.target.closest('a')) {
+          e.preventDefault();
+        }
+
         // Don't select if clicking action buttons
         if (e.target.closest('.canvas-block__action-btn')) return;
         // Don't select if editing text

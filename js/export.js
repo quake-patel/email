@@ -72,7 +72,7 @@ const ExportEngine = {
       .es-desktop-only { display: none !important; }
       .es-mobile-only { display: table-row !important; }
       .es-m-hide { display: none !important; max-height: 0 !important; overflow: hidden !important; mso-hide: all !important; }
-      .es-m-stack .es-m-stack-col { display: block !important; width: 100% !important; max-width: 100% !important; }
+      .es-m-stack .es-m-stack-col { display: block !important; float: none !important; width: 100% !important; max-width: 100% !important; }
       .es-m-stack .es-m-col-inner { width: 100% !important; max-width: 100% !important; }
       .es-m-col-pad { padding-left: 0 !important; padding-right: 0 !important; }
 ${this.generatePerBlockMobileCss(blocks, width)}
@@ -144,7 +144,7 @@ ${bodyContent}
       // Mobile columns stack disable
       if (block.type === 'structure' && block.mobileStackColumns === false && block.layout && block.layout.length > 1) {
         block.layout.forEach((wPct, i) => {
-          css += `      .es-b-${block.id} .es-col-${i} { display: table-cell !important; width: ${wPct}% !important; max-width: ${wPct}% !important; }\n`;
+          css += `      .es-b-${block.id} .es-col-${i} { display: table !important; float: left !important; width: ${wPct}% !important; max-width: ${wPct}% !important; }\n`;
         });
       }
 
@@ -194,7 +194,15 @@ ${bodyContent}
    */
   renderStructureEmail(block, gs) {
     const width = gs.contentWidth || 600;
-    const innerWidth = width - 40;
+    let padLeft = 20, padRight = 20;
+    if (block.padding !== undefined) {
+      const parts = block.padding.toString().split(' ').map(p => parseInt(p) || 0);
+      if (parts.length === 1) { padLeft = padRight = parts[0]; }
+      else if (parts.length === 2) { padLeft = padRight = parts[1]; }
+      else if (parts.length === 3) { padLeft = padRight = parts[1]; }
+      else if (parts.length === 4) { padRight = parts[1]; padLeft = parts[3]; }
+    }
+    const innerWidth = width - padLeft - padRight;
 
     let cols = '';
     
@@ -223,23 +231,52 @@ ${bodyContent}
       const colBgColor = block[`colBg_${colIdx}`] || 'transparent';
       const colBg = colBgColor !== 'transparent' ? `background-color:${colBgColor};` : '';
       const colBorder = block[`colBorder_${colIdx}`] ? `border:${block[`colBorder_${colIdx}`]};` : '';
-      let colPadStr = `padding:0 ${hPadRight}px 0 ${hPadLeft}px;`;
-      if (block[`colPadding_${colIdx}`]) colPadStr = `padding:${block[`colPadding_${colIdx}`]};`;
+      let gapPadStr = `padding:0 ${hPadRight}px 0 ${hPadLeft}px;`;
+      let innerPadStr = block[`colPadding_${colIdx}`] ? `padding:${block[`colPadding_${colIdx}`]};` : '';
 
-      const colStyles = `Margin:0;width:${colWidth}px;max-width:${colWidth}px;box-sizing:border-box;`;
+      if (block.layout.length > 1) {
+        let msoPrefix = '';
+        if (colIdx === 0) {
+          msoPrefix = `<!--[if mso]><table style="width:${innerWidth}px" cellpadding="0" cellspacing="0"><tr><td style="width:${colWidth}px" valign="top"><![endif]-->\n`;
+        } else {
+          msoPrefix = `<!--[if mso]></td><td style="width:${colWidth}px" valign="top"><![endif]-->\n`;
+        }
+        
+        let floatDir = 'left';
+        if (colIdx === block.layout.length - 1) floatDir = 'right';
 
-      cols += `
-                        <td valign="top" align="left" width="${colWidth}" class="es-m-stack-col es-col-${colIdx}${vPadClass}" style="${colStyles}">
+        const floatClass = 'es-m-stack-col es-col-' + colIdx;
+        
+        cols += `${msoPrefix}                      <table cellpadding="0" cellspacing="0" align="${floatDir}" class="${floatClass}${vPadClass}" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;float:${floatDir};width:${colWidth}px;max-width:${colWidth}px;box-sizing:border-box;">
+                        <tr>
+                          <td valign="top" align="left" style="Margin:0;${gapPadStr}">
+                            <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;">
+                              <tr>
+                                <td class="es-m-col-pad" style="${innerPadStr}${colBg}${colBorder}">
+                                  <table class="es-m-col-inner" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;max-width:${colWidth}px;table-layout:fixed">
+${cellContent || '                                    <tr><td style="padding:0;Margin:0">&nbsp;</td></tr>'}
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>\n`;
+      } else {
+        const wrapperStyles = `Margin:0;width:100%;box-sizing:border-box;${gapPadStr}`;
+        cols += `
+                        <td valign="top" align="left" class="es-m-stack-col es-col-${colIdx}${vPadClass}" style="${wrapperStyles}">
                           <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;">
                             <tr>
-                              <td class="es-m-col-pad" style="${colPadStr}${colBg}${colBorder}">
-                                <table class="es-m-col-inner" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;max-width:${colWidth}px;table-layout:fixed">
+                              <td class="es-m-col-pad" style="${innerPadStr}${colBg}${colBorder}">
+                                <table class="es-m-col-inner" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;max-width:${colWidth}px;table-layout:fixed">
 ${cellContent || '                                  <tr><td style="padding:0;Margin:0">&nbsp;</td></tr>'}
                                 </table>
                               </td>
                             </tr>
                           </table>
                         </td>`;
+      }
     });
 
     const mobileClasses = this.getMobileClasses(block);
@@ -251,15 +288,11 @@ ${cellContent || '                                  <tr><td style="padding:0;Mar
 
     // Use MSO table for multi-column
     if (block.layout.length > 1) {
+      cols += `                      <!--[if mso]></td></tr></table><![endif]-->`;
       return `
                   <tr class="${mobileClasses}">
                     <td class="es-p-td" align="left" style="Margin:0;${wrapperStyle}">
-                      <!--[if mso]><table style="width:${innerWidth}px" cellpadding="0" cellspacing="0"><tr>${block.layout.map((w, i) => `<td style="width:${Math.floor(innerWidth * w / 100)}px" valign="top">`).join('')}<!--<![endif]-->
-                      <table cellpadding="0" cellspacing="0" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;max-width:${innerWidth}px;table-layout:fixed">
-                        <tr>${cols}
-                        </tr>
-                      </table>
-                      <!--[if mso]>${block.layout.map(() => '</td>').join('')}</tr></table><![endif]-->
+${cols}
                     </td>
                   </tr>`;
     }

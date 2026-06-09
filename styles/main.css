@@ -614,8 +614,9 @@ input:focus, select:focus, textarea:focus {
   outline-offset: -2px;
 }
 
-.canvas-block:hover {
+.canvas-block:hover:not(:has(.canvas-block:hover)) {
   outline: 2px dashed var(--accent-orange-border);
+  z-index: 10;
 }
 
 /* Hidden block overlay */
@@ -625,7 +626,7 @@ input:focus, select:focus, textarea:focus {
   position: relative;
 }
 
-.canvas-block--hidden:hover {
+.canvas-block--hidden:hover:not(:has(.canvas-block:hover)) {
   opacity: 0.55;
 }
 
@@ -654,6 +655,7 @@ input:focus, select:focus, textarea:focus {
 .canvas-block--selected {
   outline: 2px solid var(--accent-orange) !important;
   box-shadow: var(--shadow-glow-orange);
+  z-index: 11;
 }
 
 .canvas-block__actions {
@@ -668,8 +670,8 @@ input:focus, select:focus, textarea:focus {
   padding: 2px;
 }
 
-.canvas-block:hover .canvas-block__actions,
-.canvas-block--selected .canvas-block__actions {
+.canvas-block:hover:not(:has(.canvas-block:hover)) > .canvas-block__actions,
+.canvas-block--selected > .canvas-block__actions {
   display: flex;
 }
 
@@ -706,10 +708,11 @@ input:focus, select:focus, textarea:focus {
   display: none;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  z-index: 5;
 }
 
-.canvas-block:hover .canvas-block__type-label,
-.canvas-block--selected .canvas-block__type-label {
+.canvas-block:hover:not(:has(.canvas-block:hover)) > .canvas-block__type-label,
+.canvas-block--selected > .canvas-block__type-label {
   display: block;
 }
 
