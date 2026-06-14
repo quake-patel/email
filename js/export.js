@@ -20,10 +20,13 @@ const ExportEngine = {
       bodyContent += this.renderBlockToEmail(block, gs);
     });
 
-    // Build preheader (hidden preview text)
-    const preheaderHtml = previewText
-      ? `\n    <span style="display:none !important;font-size:0px;line-height:0;max-height:0px;max-width:0px;opacity:0;overflow:hidden;visibility:hidden;mso-hide:all">${Utils.escapeHTML(previewText)}</span>`
-      : '';
+    // Build preheader (hidden preview text) with whitespace padding to prevent body text showing
+    let preheaderHtml = '';
+    if (previewText) {
+      // Create padding to push following text out of preview area
+      const spacePad = '&#847;&zwnj;&nbsp;'.repeat(100);
+      preheaderHtml = `\n    <span style="color:#ffffff;opacity:0;line-height:0;font-size:0px;visibility:hidden;mso-hide:all;display:none !important;height:0;width:0">${Utils.escapeHTML(previewText)}${spacePad}</span>`;
+    }
 
     return `<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html dir="ltr" xmlns="http://www.w3.org/1999/xhtml" xmlns:o="urn:schemas-microsoft-com:office:office" lang="en">
@@ -51,12 +54,17 @@ const ExportEngine = {
   </noscript>
   <![endif]-->
   <style type="text/css">
+    u + .body img ~ div div { display:none; }
     #outlook a { padding: 0; }
+    span.MsoHyperlink, span.MsoHyperlinkFollowed { color:inherit; mso-style-priority:99; }
+    a.bg { mso-style-priority:100!important; text-decoration:none!important; }
     body { margin: 0; padding: 0; -webkit-text-size-adjust: 100%; -ms-text-size-adjust: 100%; }
     table, td { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
-    p { display: block; margin: 0; }
+    p, a { line-height: 150%; margin: 0; }
+    h1, h2, h3, h4, h5, h6 { line-height: 120%; margin: 0; }
     a[x-apple-data-detectors], #MessageViewBody a { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
+    .v { display:none; float:left; overflow:hidden; width:0; max-height:0; line-height:0; mso-hide:all; }
     .es-desktop-only { display: table-row !important; }
     .es-mobile-only { display: none !important; mso-hide: all; }
     @media only screen and (max-width: ${width}px) {
@@ -86,15 +94,30 @@ ${this.generatePerBlockMobileCss(blocks, width)}
 </head>
 <body class="body" style="width:100%;height:100%;font-family:${gs.fontFamily};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">${preheaderHtml}
   <div dir="ltr" class="es-wrapper-color" lang="en" style="background-color:${gs.backgroundColor}">
+    <!--[if gte mso 9]>
+      <v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
+        <v:fill type="tile" color="${gs.backgroundColor}"></v:fill>
+      </v:background>
+    <![endif]-->
     <table cellpadding="0" width="100%" cellspacing="0" class="es-wrapper" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:${gs.backgroundColor}">
       <tr>
         <td valign="top" style="padding:0;Margin:0">
           <table cellpadding="0" cellspacing="0" align="center" class="es-content" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important">
             <tr>
               <td class="es-p-td" align="center" style="padding:0;Margin:0">
+                <!--[if gte mso 9]>
+                <table align="center" border="0" cellpadding="0" cellspacing="0" width="${width}" style="width:${width}px">
+                  <tr>
+                    <td align="center" valign="top" width="${width}" style="width:${width}px">
+                <![endif]-->
                 <table bgcolor="#ffffff" align="center" cellpadding="0" cellspacing="0" class="es-content-body" width="${width}" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:#ffffff;width:${width}px;max-width:${width}px;table-layout:fixed" role="none">
 ${bodyContent}
                 </table>
+                <!--[if gte mso 9]>
+                    </td>
+                  </tr>
+                </table>
+                <![endif]-->
               </td>
             </tr>
           </table>
@@ -405,7 +428,7 @@ ${contentTd}
     const radiusArc = parseInt(radius) > 0 ? Math.round((parseInt(radius) / 40) * 50) : 0;
     const spanWidth = block.fullWidth ? `display:block;width:100%;` : 'display:inline-block;';
     const aWidth = block.fullWidth ? `display:block;width:auto;` : 'display:inline-block;';
-    const vmlWidth = block.fullWidth ? '100%' : '200px';
+    const vmlWidthAttr = block.fullWidth ? 'width:100%;' : '';
     const tableWidth = block.fullWidth ? 'width="100%"' : '';
     const mc = this.getMobileClasses(block);
     const fontWeight = block.fontWeight || 'bold';
@@ -419,9 +442,11 @@ ${contentTd}
                                   <tr>
                                     <td class="es-p-td" align="center" style="Margin:0;padding:0;">
                                       <!--[if mso]><a href="${href}" target="_blank" hidden>
-                                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="${href}" style="height:40px; v-text-anchor:middle; width:${vmlWidth}" arcsize="${radiusArc}%" stroke="f" fillcolor="${bg}">
+                                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="${href}" style="height:40px; v-text-anchor:middle; ${vmlWidthAttr}" arcsize="${radiusArc}%" stroke="f" fillcolor="${bg}">
                                           <w:anchorlock></w:anchorlock>
+                                          ${block.fullWidth ? '' : '<v:textbox inset="0,0,0,0">'}
                                           <center style='color:${color}; font-family:${gs.fontFamily}; font-size:${parseInt(fontSize) - 2}px; font-weight:${fwNum}; line-height:${parseInt(fontSize) - 2}px; mso-text-raise:1px'>${btnText}</center>
+                                          ${block.fullWidth ? '' : '</v:textbox>'}
                                         </v:roundrect></a>
                                       <![endif]-->
                                       <!--[if !mso]><!-- --><span style="border-style:solid;border-color:${bg};background:${bg};border-width:0px;${spanWidth}border-radius:${radius};mso-hide:all;${borderStyle}">

@@ -16,6 +16,17 @@ const Canvas = {
     if (blocks.length === 0) {
       wrapper.innerHTML = this.renderEmptyState();
       wrapper.style.backgroundColor = gs.backgroundColor;
+      
+      const viewport = this.getViewport();
+      if (viewport === 'desktop') {
+        wrapper.style.width = gs.contentWidth + 'px';
+        wrapper.style.maxWidth = gs.contentWidth + 'px';
+        const widthText = document.getElementById('canvas-width-text');
+        if (widthText) widthText.textContent = gs.contentWidth + 'px';
+      } else {
+        wrapper.style.width = '';
+        wrapper.style.maxWidth = '';
+      }
       return;
     }
 
@@ -28,6 +39,17 @@ const Canvas = {
 
     wrapper.innerHTML = html;
     wrapper.style.backgroundColor = gs.backgroundColor;
+    
+    const viewport = this.getViewport();
+    if (viewport === 'desktop') {
+      wrapper.style.width = gs.contentWidth + 'px';
+      wrapper.style.maxWidth = gs.contentWidth + 'px';
+      const widthText = document.getElementById('canvas-width-text');
+      if (widthText) widthText.textContent = gs.contentWidth + 'px';
+    } else {
+      wrapper.style.width = '';
+      wrapper.style.maxWidth = '';
+    }
 
     this.bindBlockEvents();
   },

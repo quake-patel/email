@@ -16,6 +16,7 @@ const App = {
     DragDrop.init();
     PropertiesPanel.init();
 
+
     // 3. Initial render
     Canvas.render();
 
@@ -352,7 +353,9 @@ const App = {
         if (viewport === 'mobile') wrapper.classList.add('canvas-wrapper--mobile');
 
         // Update width badge
-        if (widthText) widthText.textContent = config.width + 'px';
+        if (widthText) {
+          widthText.textContent = viewport === 'desktop' && window.EmailState ? EmailState.data.globalStyles.contentWidth + 'px' : config.width + 'px';
+        }
 
         // Update badge icon
         if (widthBadge) {
