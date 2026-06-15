@@ -17,7 +17,29 @@ const ExportEngine = {
 
     let bodyContent = '';
     blocks.forEach(block => {
-      bodyContent += this.renderBlockToEmail(block, gs);
+      const blockTrHtml = this.renderBlockToEmail(block, gs);
+      const blockBgColor = block.type === 'structure' && block.bgColor ? block.bgColor : '#ffffff';
+
+      bodyContent += `
+          <table cellpadding="0" cellspacing="0" align="center" class="es-content" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important">
+            <tr>
+              <td align="center" style="padding:0;Margin:0">
+                <!--[if gte mso 9]>
+                <table align="center" border="0" cellpadding="0" cellspacing="0" width="${width}" style="width:${width}px;table-layout:fixed;">
+                  <tr>
+                    <td align="center" valign="top" width="${width}" style="width:${width}px">
+                <![endif]-->
+                <table bgcolor="${blockBgColor}" align="center" cellpadding="0" cellspacing="0" class="es-content-body" width="${width}" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:${blockBgColor};width:${width}px" role="none">
+${blockTrHtml}
+                </table>
+                <!--[if gte mso 9]>
+                    </td>
+                  </tr>
+                </table>
+                <![endif]-->
+              </td>
+            </tr>
+          </table>`;
     });
 
     // Build preheader (hidden preview text) with whitespace padding to prevent body text showing
@@ -37,6 +59,12 @@ const ExportEngine = {
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta content="telephone=no" name="format-detection">
   <title>${Utils.escapeHTML(subjectLine)}</title>
+  <!--[if !mso]><!-- -->
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,400i,700,700i" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Lato:400">
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,100;0,300;0,400;0,700;0,900;1,100;1,300;1,400;1,700;1,900&display=swap">
+  <!--<![endif]-->
   <!--[if (mso 16)]>
   <style type="text/css">
     a {text-decoration: none;}
@@ -68,9 +96,9 @@ const ExportEngine = {
     .es-desktop-only { display: table-row !important; }
     .es-mobile-only { display: none !important; mso-hide: all; }
     @media only screen and (max-width: ${width}px) {
-      .es-wrapper { width: 100% !important; }
-      .es-content-body { width: 100% !important; }
-      .adapt-img { max-width: 100% !important; height: auto !important; }
+      .es-wrapper { width: 100% !important; min-width: 100% !important; }
+      .es-content, .es-content-body { width: 100% !important; min-width: 100% !important; max-width: 100% !important; }
+      .adapt-img { width: 100% !important; height: auto !important; }
       .es-m-p10 { padding: 10px !important; }
       .es-m-p15 { padding: 15px !important; }
       h1 { font-size: 28px !important; line-height: 120% !important; }
@@ -82,7 +110,7 @@ const ExportEngine = {
       .es-m-hide { display: none !important; max-height: 0 !important; overflow: hidden !important; mso-hide: all !important; }
       .es-m-stack .es-m-stack-col { display: block !important; float: none !important; width: 100% !important; max-width: 100% !important; }
       .es-m-stack .es-m-col-inner { width: 100% !important; max-width: 100% !important; }
-      .es-m-col-pad { padding-left: 0 !important; padding-right: 0 !important; }
+      .es-m-stack .es-m-stack-gap-pad { padding-left: 0 !important; padding-right: 0 !important; }
 ${this.generatePerBlockMobileCss(blocks, width)}
     }
     /* Width containment */
@@ -92,7 +120,7 @@ ${this.generatePerBlockMobileCss(blocks, width)}
     .es-content-body td { word-break: break-word; }
   </style>
 </head>
-<body class="body" style="width:100%;height:100%;font-family:${gs.fontFamily};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">${preheaderHtml}
+<body class="body" style="width:100%;min-width:100%;height:100%;font-family:${gs.fontFamily};-webkit-text-size-adjust:100%;-ms-text-size-adjust:100%;padding:0;Margin:0">${preheaderHtml}
   <div dir="ltr" class="es-wrapper-color" lang="en" style="background-color:${gs.backgroundColor}">
     <!--[if gte mso 9]>
       <v:background xmlns:v="urn:schemas-microsoft-com:vml" fill="t">
@@ -102,25 +130,7 @@ ${this.generatePerBlockMobileCss(blocks, width)}
     <table cellpadding="0" width="100%" cellspacing="0" class="es-wrapper" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;padding:0;Margin:0;width:100%;height:100%;background-repeat:repeat;background-position:center top;background-color:${gs.backgroundColor}">
       <tr>
         <td valign="top" style="padding:0;Margin:0">
-          <table cellpadding="0" cellspacing="0" align="center" class="es-content" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;table-layout:fixed !important">
-            <tr>
-              <td class="es-p-td" align="center" style="padding:0;Margin:0">
-                <!--[if gte mso 9]>
-                <table align="center" border="0" cellpadding="0" cellspacing="0" width="${width}" style="width:${width}px">
-                  <tr>
-                    <td align="center" valign="top" width="${width}" style="width:${width}px">
-                <![endif]-->
-                <table bgcolor="#ffffff" align="center" cellpadding="0" cellspacing="0" class="es-content-body" width="${width}" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;background-color:#ffffff;width:${width}px;max-width:${width}px;table-layout:fixed" role="none">
 ${bodyContent}
-                </table>
-                <!--[if gte mso 9]>
-                    </td>
-                  </tr>
-                </table>
-                <![endif]-->
-              </td>
-            </tr>
-          </table>
         </td>
       </tr>
     </table>
@@ -260,7 +270,7 @@ ${bodyContent}
       if (block.layout.length > 1) {
         let msoPrefix = '';
         if (colIdx === 0) {
-          msoPrefix = `<!--[if mso]><table style="width:${innerWidth}px" cellpadding="0" cellspacing="0"><tr><td style="width:${colWidth}px" valign="top"><![endif]-->\n`;
+          msoPrefix = `<!--[if mso]><table style="width:${innerWidth}px;table-layout:fixed;" cellpadding="0" cellspacing="0"><tr><td style="width:${colWidth}px" valign="top"><![endif]-->\n`;
         } else {
           msoPrefix = `<!--[if mso]></td><td style="width:${colWidth}px" valign="top"><![endif]-->\n`;
         }
@@ -270,13 +280,13 @@ ${bodyContent}
 
         const floatClass = 'es-m-stack-col es-col-' + colIdx;
         
-        cols += `${msoPrefix}                      <table cellpadding="0" cellspacing="0" align="${floatDir}" class="${floatClass}${vPadClass}" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;float:${floatDir};width:${colWidth}px;max-width:${colWidth}px;box-sizing:border-box;">
+        cols += `${msoPrefix}                      <table cellpadding="0" cellspacing="0" align="${floatDir}" class="${floatClass}${vPadClass}" role="none" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;float:${floatDir};width:${colWidth}px;box-sizing:border-box;">
                         <tr>
-                          <td valign="top" align="left" style="Margin:0;${gapPadStr}">
+                          <td class="es-m-stack-gap-pad" valign="top" align="left" style="Margin:0;${gapPadStr}">
                             <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;">
                               <tr>
                                 <td class="es-m-col-pad" style="${innerPadStr}${colBg}${colBorder}">
-                                  <table class="es-m-col-inner" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;max-width:${colWidth}px;table-layout:fixed">
+                                  <table class="es-m-col-inner" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
 ${cellContent || '                                    <tr><td style="padding:0;Margin:0">&nbsp;</td></tr>'}
                                   </table>
                                 </td>
@@ -292,7 +302,7 @@ ${cellContent || '                                    <tr><td style="padding:0;M
                           <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;">
                             <tr>
                               <td class="es-m-col-pad" style="${innerPadStr}${colBg}${colBorder}">
-                                <table class="es-m-col-inner" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%;max-width:${colWidth}px;table-layout:fixed">
+                                <table class="es-m-col-inner" cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;width:100%">
 ${cellContent || '                                  <tr><td style="padding:0;Margin:0">&nbsp;</td></tr>'}
                                 </table>
                               </td>
@@ -323,7 +333,7 @@ ${cols}
     return `
                   <tr class="${mobileClasses}">
                     <td class="es-p-td" align="left" style="Margin:0;${wrapperStyle}">
-                      <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;max-width:${innerWidth}px;table-layout:fixed">
+                      <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
                         <tr>${cols}
                         </tr>
                       </table>
@@ -393,11 +403,12 @@ ${contentTd}
     const bgColor = block.bgColor && block.bgColor !== 'transparent' ? `background-color:${block.bgColor};` : '';
     const borderStyle = Utils.getBorderStyle(block);
     const radiusStyle = block.borderRadius && block.borderRadius !== '0px' ? `border-radius:${block.borderRadius};` : '';
+    const adaptClass = block.responsive !== false ? 'adapt-img' : '';
 
     const padding = block.padding !== undefined ? block.padding : '10px 20px';
     let contentTd = `
                               <td class="es-p-td" align="${block.align || 'center'}" style="${bgColor}padding:${padding};Margin:0;font-size:0px">
-                                ${linkStart}<img width="${width}" src="${block.src}" alt="${Utils.escapeHTML(block.alt || '')}" class="adapt-img" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;Margin:0;max-width:100%;width:${width}px;${borderStyle}${radiusStyle}">${linkEnd}
+                                ${linkStart}<img width="${width}" src="${block.src}" alt="${Utils.escapeHTML(block.alt || '')}" class="${adaptClass}" style="display:block;font-size:14px;border:0;outline:none;text-decoration:none;Margin:0;max-width:100%;width:${width}px;${borderStyle}${radiusStyle}">${linkEnd}
                               </td>`;
 
     if (block.margin && block.margin !== '0') {
@@ -416,7 +427,7 @@ ${contentTd}
   },
 
   /**
-   * Button block — with VML fallback for Outlook
+   * Button block — unified table approach for all clients
    */
   renderButtonEmail(block, gs) {
     const btnText = Utils.escapeHTML(block.text || 'Button');
@@ -424,37 +435,41 @@ ${contentTd}
     const bg = block.bgColor || gs.buttonBgColor;
     const color = block.textColor || gs.buttonTextColor;
     const fontSize = block.fontSize || gs.buttonFontSize;
-    const radius = block.borderRadius || gs.buttonBorderRadius;
-    const radiusArc = parseInt(radius) > 0 ? Math.round((parseInt(radius) / 40) * 50) : 0;
-    const spanWidth = block.fullWidth ? `display:block;width:100%;` : 'display:inline-block;';
-    const aWidth = block.fullWidth ? `display:block;width:auto;` : 'display:inline-block;';
-    const vmlWidthAttr = block.fullWidth ? 'width:100%;' : '';
-    const tableWidth = block.fullWidth ? 'width="100%"' : '';
-    const mc = this.getMobileClasses(block);
+    const radius = block.borderRadius || gs.buttonBorderRadius || '4px';
     const fontWeight = block.fontWeight || 'bold';
-    const fwNum = fontWeight === 'normal' ? '400' : '700';
+    
+    const tableWidth = block.fullWidth ? 'width="100%"' : '';
+    const aWidth = block.fullWidth ? 'display:block;width:auto;box-sizing:border-box;' : 'display:inline-block;';
+    const mc = this.getMobileClasses(block);
     const borderStyle = Utils.getBorderStyle(block);
 
     const padding = block.padding !== undefined ? block.padding : '10px 20px';
+    const btnPadding = '12px 30px';
+
     let contentTd = `
                               <td class="es-p-td" align="${block.align || 'center'}" style="padding:${padding};Margin:0;text-align:${block.align || 'center'}">
-                                <table ${tableWidth} align="${block.align || 'center'}" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;">
+                                <!--[if mso]>
+                                <table ${tableWidth} align="${block.align || 'center'}" cellpadding="0" cellspacing="0" border="0" style="border-spacing:0;mso-table-lspace:0pt;mso-table-rspace:0pt;">
                                   <tr>
-                                    <td class="es-p-td" align="center" style="Margin:0;padding:0;">
-                                      <!--[if mso]><a href="${href}" target="_blank" hidden>
-                                        <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word" esdevVmlButton href="${href}" style="height:40px; v-text-anchor:middle; ${vmlWidthAttr}" arcsize="${radiusArc}%" stroke="f" fillcolor="${bg}">
-                                          <w:anchorlock></w:anchorlock>
-                                          ${block.fullWidth ? '' : '<v:textbox inset="0,0,0,0">'}
-                                          <center style='color:${color}; font-family:${gs.fontFamily}; font-size:${parseInt(fontSize) - 2}px; font-weight:${fwNum}; line-height:${parseInt(fontSize) - 2}px; mso-text-raise:1px'>${btnText}</center>
-                                          ${block.fullWidth ? '' : '</v:textbox>'}
-                                        </v:roundrect></a>
-                                      <![endif]-->
-                                      <!--[if !mso]><!-- --><span style="border-style:solid;border-color:${bg};background:${bg};border-width:0px;${spanWidth}border-radius:${radius};mso-hide:all;${borderStyle}">
-                                        <a href="${href}" target="_blank" style="mso-style-priority:100 !important;text-decoration:none !important;mso-line-height-rule:exactly;color:${color};font-size:${fontSize};padding:12px 30px;${aWidth}background:${bg};border-radius:${radius};font-family:${gs.fontFamily};font-weight:${fontWeight};font-style:normal;line-height:120%;text-align:center;letter-spacing:0;mso-padding-alt:0;mso-border-alt:10px solid ${bg};${borderStyle}">${btnText}</a>
-                                      </span><!--<![endif]-->
+                                    <td align="center" bgcolor="${bg === 'transparent' ? '' : bg}" style="padding:${btnPadding};border-radius:${radius};${borderStyle}">
+                                      <a href="${href}" target="_blank" style="color:${color};font-family:${gs.fontFamily};font-size:${fontSize};font-weight:${fontWeight};text-decoration:none;">
+                                        ${btnText}
+                                      </a>
                                     </td>
                                   </tr>
                                 </table>
+                                <![endif]-->
+                                <!--[if !mso]><!-- -->
+                                <table ${tableWidth} align="${block.align || 'center'}" cellpadding="0" cellspacing="0" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;">
+                                  <tr>
+                                    <td align="center" bgcolor="${bg === 'transparent' ? '' : bg}" role="presentation" style="border:none;border-radius:${radius};cursor:auto;background:${bg};${borderStyle}">
+                                      <a href="${href}" target="_blank" style="${aWidth} background:${bg};color:${color};font-family:${gs.fontFamily};font-size:${fontSize};font-weight:${fontWeight};line-height:120%;margin:0;text-decoration:none;text-transform:none;padding:${btnPadding};border-radius:${radius};">
+                                        ${btnText}
+                                      </a>
+                                    </td>
+                                  </tr>
+                                </table>
+                                <!--<![endif]-->
                               </td>`;
 
     if (block.margin && block.margin !== '0') {

@@ -127,6 +127,10 @@ const PropertiesPanel = {
           <span class="prop-row__label">Width</span>
           <input class="prop-input prop-input--md" type="text" value="${block.width || '100%'}" data-prop="width" />
         </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Responsive (Mobile 100%)</span>
+          <div class="toggle-switch ${block.responsive !== false ? 'toggle-switch--active' : ''}" data-prop="responsive" data-toggle></div>
+        </div>
         ${this.renderAlignmentRow(block.align || 'center', 'align')}
         <div class="prop-row" style="margin-top:4px;">
           <span class="prop-row__label">Background</span>

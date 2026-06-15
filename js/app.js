@@ -10,6 +10,11 @@ const App = {
     // 1. Init state
     EmailState.init();
 
+    // 1.5 Init Theme
+    if (localStorage.getItem('theme-dark') === 'true') {
+      document.body.classList.add('theme-dark');
+    }
+
     // 2. Init modules
     BlocksPanel.init();
     Canvas.init();
@@ -93,6 +98,14 @@ const App = {
         EmailState.reset();
         Utils.showToast('Canvas cleared');
       }
+    });
+
+    // Theme toggle
+    document.getElementById('btn-theme-toggle')?.addEventListener('click', () => {
+      document.body.classList.toggle('theme-dark');
+      const isDark = document.body.classList.contains('theme-dark');
+      localStorage.setItem('theme-dark', isDark);
+      Utils.showToast(isDark ? 'Dark mode enabled' : 'Light mode enabled');
     });
   },
 

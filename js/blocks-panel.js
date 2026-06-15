@@ -73,6 +73,7 @@ const BlocksPanel = {
         padding: '10px 20px',
         borderRadius: '0px',
         border: '',
+        responsive: true,
       },
       button: {
         type: 'button',
@@ -168,27 +169,24 @@ const BlocksPanel = {
     };
   },
 
-  /**
-   * Render the panel
-   */
   render() {
-    const body = document.getElementById('blocks-panel-body');
-    if (!body) return;
+    const container = document.getElementById('blocks-panel-body');
+    if (!container) return;
 
     if (this.activeTab === 'structures') {
-      body.innerHTML = this.renderStructures();
+      container.innerHTML = this.renderStructures();
     } else {
-      body.innerHTML = this.renderContentBlocks();
+      container.innerHTML = this.renderContentBlocks();
     }
 
     this.bindDragEvents();
   },
 
   /**
-   * Render structures list
+   * Render structures grid
    */
   renderStructures() {
-    let html = '<div class="panel-section-title">Layout Structures</div>';
+    let html = '<div class="panel-section-title" style="font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:1px; margin-bottom: 8px;">LAYOUT STRUCTURES</div>';
     html += '<div class="structures-grid">';
 
     this.structures.forEach(s => {
@@ -210,14 +208,14 @@ const BlocksPanel = {
    * Render content blocks grid
    */
   renderContentBlocks() {
-    let html = '<div class="panel-section-title">Content Blocks</div>';
+    let html = '<div class="panel-section-title" style="font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:1px; margin-bottom: 8px;">CONTENT BLOCKS</div>';
     html += '<div class="blocks-grid">';
 
     this.contentBlocks.forEach(b => {
       html += `
         <div class="block-card" draggable="true" data-block-type="${b.type}">
-          <div class="block-card__icon">${this.getIcon(b.icon)}</div>
-          <div class="block-card__label">${b.label}</div>
+          <div class="block-card__icon" style="color:var(--accent-green); margin-bottom: 8px;">${this.getIcon(b.icon)}</div>
+          <div class="block-card__label" style="font-size: 11px; color: var(--text-secondary);">${b.label}</div>
         </div>`;
     });
 

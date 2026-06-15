@@ -115,7 +115,7 @@ const Canvas = {
 
     const parentInfo = EmailState.findParent(block.id);
     const parentButton = parentInfo 
-      ? `<button class="canvas-block__action-btn" data-action="select-parent" title="Select Row" style="width:auto;padding:0 8px;font-size:10px;font-weight:bold;background:var(--accent-blue);color:white;border-color:var(--accent-blue);">
+      ? `<button class="canvas-block__action-btn" data-action="select-parent" title="Select Row" style="width:auto; height:auto; padding:4px 12px; font-size:11px; font-weight:600; background:var(--accent-blue); color:white; border-radius:12px; border:none; white-space:nowrap; letter-spacing:0.3px; margin-right: 4px;">
            Select Row
          </button>`
       : '';
@@ -302,6 +302,7 @@ const Canvas = {
     const borderStyle = Utils.getBorderStyle(block);
     const radiusStyle = block.borderRadius && block.borderRadius !== '0px' ? `border-radius:${block.borderRadius};` : '';
     const imgStyle = `max-width:100%;width:${block.width || '100%'};display:block;margin:0 auto;${borderStyle}${radiusStyle}`;
+    const adaptClass = block.responsive !== false ? 'adapt-img' : '';
     const src = block.src || '';
 
     if (!src) {
@@ -325,7 +326,7 @@ const Canvas = {
     const marginStr = (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) && (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) !== '0' ? `margin:${(isMobile && block.mobileMargin ? block.mobileMargin : block.margin)};` : '';
     return `
       <div style="${marginStr}background-color:${bgColor};padding:${padding};text-align:${align};">
-        ${linkStart}<img src="${src}" alt="${block.alt || ''}" style="border:0;outline:none;${imgStyle}" />${linkEnd}
+        ${linkStart}<img src="${src}" alt="${block.alt || ''}" class="${adaptClass}" style="border:0;outline:none;${imgStyle}" />${linkEnd}
       </div>`;
   },
 
