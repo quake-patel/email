@@ -152,6 +152,9 @@ const Canvas = {
           <button class="canvas-block__action-btn" data-action="duplicate" title="Duplicate">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
           </button>
+          <button class="canvas-block__action-btn" data-action="save-component" title="Save as Component">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
+          </button>
           <button class="canvas-block__action-btn" data-action="delete" title="Delete">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
           </button>
@@ -264,6 +267,9 @@ const Canvas = {
         <div class="canvas-block__actions">
           <button class="canvas-block__action-btn" data-action="duplicate" title="Duplicate">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          </button>
+          <button class="canvas-block__action-btn" data-action="save-component" title="Save as Component">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
           </button>
           <button class="canvas-block__action-btn" data-action="delete" title="Delete">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
@@ -497,6 +503,16 @@ const Canvas = {
             const parent = EmailState.findParent(blockId);
             if (parent) {
               EmailState.selectBlock(parent.parent.id);
+            }
+            break;
+          case 'save-component':
+            const compBlock = EmailState.getBlock(blockId);
+            if (compBlock) {
+              const name = prompt('Enter a name for this saved component:', compBlock.type.charAt(0).toUpperCase() + compBlock.type.slice(1) + ' Component');
+              if (name) {
+                EmailState.saveComponent(compBlock, name);
+                Utils.showToast('Component saved to library');
+              }
             }
             break;
         }

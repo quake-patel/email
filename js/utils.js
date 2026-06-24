@@ -136,6 +136,44 @@ const Utils = {
     if (block.borderBottom) style += `border-bottom:${block.borderBottom};`;
     if (block.borderLeft) style += `border-left:${block.borderLeft};`;
     return style;
+  },
+
+  /**
+   * Custom confirm dialog to bypass window.confirm blockers
+   */
+  customConfirm(message, onConfirm) {
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-overlay modal-overlay--visible';
+    overlay.style.zIndex = '9999';
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal';
+    modal.style.width = '400px';
+    modal.style.maxWidth = '90vw';
+    
+    modal.innerHTML = `
+      <div class="modal__header">
+        <h2 class="modal__title">Confirm Action</h2>
+      </div>
+      <div class="modal__body" style="padding: 20px; color: #333; font-size: 14px;">
+        ${this.escapeHTML(message)}
+      </div>
+      <div class="modal__footer" style="display: flex; justify-content: flex-end; gap: 8px;">
+        <button class="btn btn--secondary" id="custom-confirm-cancel">Cancel</button>
+        <button class="btn btn--primary" id="custom-confirm-ok" style="background: var(--accent-blue); color: white;">OK</button>
+      </div>
+    `;
+    
+    overlay.appendChild(modal);
+    document.body.appendChild(overlay);
+    
+    const close = () => overlay.remove();
+    
+    modal.querySelector('#custom-confirm-cancel').addEventListener('click', close);
+    modal.querySelector('#custom-confirm-ok').addEventListener('click', () => {
+      close();
+      onConfirm();
+    });
   }
 };
 

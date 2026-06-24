@@ -94,10 +94,10 @@ const App = {
 
     // Clear all
     document.getElementById('btn-clear')?.addEventListener('click', () => {
-      if (confirm('Clear all blocks? This cannot be undone.')) {
+      Utils.customConfirm('Clear all blocks? This cannot be undone.', () => {
         EmailState.reset();
         Utils.showToast('Canvas cleared');
-      }
+      });
     });
 
     // Theme toggle
@@ -250,12 +250,12 @@ const App = {
     });
 
     document.getElementById('btn-new-template')?.addEventListener('click', () => {
-      if (confirm('Create a new blank template? Unsaved changes to the current template will be lost.')) {
+      Utils.customConfirm('Create a new blank template? Unsaved changes to the current template will be lost.', () => {
         EmailState.startNewTemplate();
         if (nameInput) nameInput.value = EmailState.data.templateName;
         closeModal();
         Utils.showToast('Started new template');
-      }
+      });
     });
 
     // Handle template actions inside modal
@@ -265,21 +265,21 @@ const App = {
 
       if (btnLoad) {
         const id = btnLoad.dataset.id;
-        if (confirm('Load this template? Unsaved changes will be lost.')) {
+        Utils.customConfirm('Load this template? Unsaved changes will be lost.', () => {
           EmailState.loadFromGallery(id);
           if (nameInput) nameInput.value = EmailState.data.templateName;
           closeModal();
           Utils.showToast('Template loaded');
-        }
+        });
       }
 
       if (btnDelete) {
         const id = btnDelete.dataset.id;
-        if (confirm('Are you sure you want to delete this template permanently?')) {
+        Utils.customConfirm('Are you sure you want to delete this template permanently?', () => {
           EmailState.deleteFromGallery(id);
           this.renderTemplatesList(container);
           Utils.showToast('Template deleted');
-        }
+        });
       }
     });
   },

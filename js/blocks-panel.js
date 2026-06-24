@@ -177,6 +177,8 @@ const BlocksPanel = {
 
     if (this.activeTab === 'structures') {
       container.innerHTML = this.renderStructures();
+    } else if (this.activeTab === 'components') {
+      container.innerHTML = this.renderStoredComponents();
     } else {
       container.innerHTML = this.renderContentBlocks();
     }
@@ -218,6 +220,39 @@ const BlocksPanel = {
         <div class="block-card" draggable="true" data-block-type="${b.type}">
           <div class="block-card__icon" style="color:var(--accent-green); margin-bottom: 8px;">${this.getIcon(b.icon)}</div>
           <div class="block-card__label" style="font-size: 11px; color: var(--text-secondary);">${b.label}</div>
+        </div>`;
+    });
+    html += '</div>';
+    return html;
+  },
+
+  /**
+   * Render stored components grid
+   */
+  renderStoredComponents() {
+    let html = '<div class="panel-section-title" style="font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:1px; margin-bottom: 8px;">SAVED COMPONENTS</div>';
+    const components = EmailState.getStoredComponents();
+    
+    if (components.length === 0) {
+      html += '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">No saved components yet. Save a block from the canvas to see it here.</div>';
+      return html;
+    }
+
+    html += '<div class="blocks-grid">';
+
+    components.forEach(c => {
+      const isStructure = c.data.type === 'structure';
+      const icon = isStructure 
+        ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>'
+        : this.getIcon(this.contentBlocks.find(b => b.type === c.data.type)?.icon || 'html');
+
+      html += `
+        <div class="block-card" style="position:relative;" draggable="true" data-component-id="${c.id}">
+          <button class="delete-component-btn" data-id="${c.id}" style="position:absolute;top:4px;right:4px;background:none;border:none;color:#999;cursor:pointer;padding:2px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          </button>
+          <div class="block-card__icon" style="color:var(--accent-blue); margin-bottom: 8px;">${icon}</div>
+          <div class="block-card__label" style="font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 4px;" title="${c.name}">${c.name}</div>
         </div>`;
     });
 
@@ -263,7 +298,7 @@ const BlocksPanel = {
     });
 
     // Content blocks
-    document.querySelectorAll('.block-card[draggable]').forEach(card => {
+    document.querySelectorAll('.block-card[data-block-type][draggable]').forEach(card => {
       card.addEventListener('dragstart', (e) => {
         const blockType = card.dataset.blockType;
         e.dataTransfer.setData('application/x-block-type', blockType);
@@ -282,6 +317,46 @@ const BlocksPanel = {
         card.style.opacity = '1';
       });
     });
+
+    // Stored components
+    document.querySelectorAll('.block-card[data-component-id][draggable]').forEach(card => {
+      card.addEventListener('dragstart', (e) => {
+        const compId = card.dataset.componentId;
+        e.dataTransfer.setData('application/x-stored-component', compId);
+        
+        const cMeta = EmailState.getStoredComponents().find(c => c.id === compId);
+        if (cMeta && cMeta.data.type === 'structure') {
+          // This allows drag-drop.js to correctly disable column drops for structure components
+          e.dataTransfer.setData('application/x-is-structure', 'true');
+        }
+
+        e.dataTransfer.effectAllowed = 'copy';
+        card.style.opacity = '0.5';
+
+        const ghost = document.createElement('div');
+        ghost.className = 'drag-ghost';
+        const cName = EmailState.getStoredComponents().find(c => c.id === compId)?.name || 'Component';
+        ghost.textContent = cName;
+        document.body.appendChild(ghost);
+        e.dataTransfer.setDragImage(ghost, 50, 18);
+        setTimeout(() => ghost.remove(), 0);
+      });
+
+      card.addEventListener('dragend', () => {
+        card.style.opacity = '1';
+      });
+    });
+
+    // Delete component buttons
+    document.querySelectorAll('.delete-component-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm('Delete this saved component?')) {
+          EmailState.deleteStoredComponent(btn.dataset.id);
+          this.render();
+        }
+      });
+    });
   },
 
   /**
@@ -292,6 +367,14 @@ const BlocksPanel = {
     document.querySelectorAll('.panel-left .panel-tab').forEach(tab => {
       tab.addEventListener('click', () => this.setTab(tab.dataset.tab));
     });
+    
+    // Listen to component changes to re-render if active
+    EmailState.on((changeType) => {
+      if (changeType === 'componentsChanged' && this.activeTab === 'components') {
+        this.render();
+      }
+    });
+
     this.render();
   }
 };

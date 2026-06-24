@@ -35,10 +35,14 @@
         </div>
 
         <!-- Save/Cloud -->
-        <button class="toolbar-btn" style="border:none; box-shadow:none; background:transparent; padding:0; gap:2px; color:#666;" id="btn-save" title="Save">
-          <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><polyline points="9 15 11 17 15 12" stroke="var(--accent-green)"></polyline></svg>
-          <svg style="width:12px;height:12px;color:#ccc;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
-        </button>
+        <div style="display:flex; align-items:center;">
+          <button class="toolbar-btn" style="border:none; box-shadow:none; background:transparent; padding:4px; color:#666;" id="btn-save" title="Save Template">
+            <svg style="width:18px;height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/><polyline points="9 15 11 17 15 12" stroke="var(--accent-green)"></polyline></svg>
+          </button>
+          <button class="toolbar-btn" style="border:none; box-shadow:none; background:transparent; padding:4px; margin-left:-4px; color:#ccc;" id="btn-templates" title="Template Gallery">
+            <svg style="width:12px;height:12px;color:#ccc;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </button>
+        </div>
 
         <div class="toolbar__divider" style="height:20px; margin:0 4px; background:#e5e7eb;"></div>
 
@@ -114,6 +118,9 @@
         </button>
         <button class="panel-tab" data-tab="blocks" title="Add Blocks">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+        <button class="panel-tab" data-tab="components" title="Saved Components">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path></svg>
         </button>
       </div>
 

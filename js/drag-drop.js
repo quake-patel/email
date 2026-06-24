@@ -81,7 +81,7 @@ const DragDrop = {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
 
-    const isStructure = e.dataTransfer.types.includes('application/x-structure-id') || e.dataTransfer.types.includes('application/x-reorder');
+    const isStructure = e.dataTransfer.types.includes('application/x-structure-id') || e.dataTransfer.types.includes('application/x-reorder') || e.dataTransfer.types.includes('application/x-is-structure');
 
     let dropZone = e.target.closest('.drop-zone');
     let dropZoneCol = isStructure ? null : e.target.closest('.drop-zone-col');
@@ -147,7 +147,7 @@ const DragDrop = {
     e.preventDefault();
     this.clearDropZones();
 
-    const isStructure = e.dataTransfer.types.includes('application/x-structure-id');
+    const isStructure = e.dataTransfer.types.includes('application/x-structure-id') || e.dataTransfer.types.includes('application/x-is-structure');
     const emptyCanvas = e.target.closest('#canvas-drop-empty');
 
     let dropZone = e.target.closest('.drop-zone');
@@ -181,14 +181,15 @@ const DragDrop = {
     const structureId = e.dataTransfer.getData('application/x-structure-id');
     const blockType = e.dataTransfer.getData('application/x-block-type');
     const reorderIdx = e.dataTransfer.getData('application/x-reorder');
+    const componentId = e.dataTransfer.getData('application/x-stored-component');
 
     // Handle drop into a column
     if (dropZoneCol) {
       const parentId = dropZoneCol.dataset.parentId;
       const colIndex = parseInt(dropZoneCol.dataset.colIndex);
       
-      if (structureId || blockType) {
-        this.dropIntoColumn(parentId, colIndex, structureId, blockType);
+      if (structureId || blockType || componentId) {
+        this.dropIntoColumn(parentId, colIndex, structureId, blockType, componentId);
       } else if (reorderIdx) {
         // reorderIdx is now blockId
         EmailState.moveBlockById(reorderIdx, { type: 'column', parentId, colIndex });
@@ -212,6 +213,24 @@ const DragDrop = {
         EmailState.selectBlock(block.id);
         Utils.showToast(`${blockType.charAt(0).toUpperCase() + blockType.slice(1)} block added`);
       }
+    } else if (componentId) {
+      // Dropped a stored component
+      const cMeta = EmailState.getStoredComponents().find(c => c.id === componentId);
+      if (cMeta) {
+        const clone = Utils.deepClone(cMeta.data);
+        // Regenerate ID for the dropped clone and any children
+        clone.id = Utils.generateId(clone.type);
+        if (clone.columns) {
+          clone.columns.forEach(col => {
+            col.forEach(child => {
+              child.id = Utils.generateId(child.type);
+            });
+          });
+        }
+        EmailState.addBlock(clone, dropIndex);
+        EmailState.selectBlock(clone.id);
+        Utils.showToast('Component added');
+      }
     } else if (reorderIdx) {
       // Reorder existing block to top-level
       EmailState.moveBlockById(reorderIdx, { type: 'top', dropIndex });
@@ -221,7 +240,7 @@ const DragDrop = {
   /**
    * Drop a block into a structure column
    */
-  dropIntoColumn(parentId, colIndex, structureId, blockType) {
+  dropIntoColumn(parentId, colIndex, structureId, blockType, componentId) {
     const parent = EmailState.getBlock(parentId);
     if (!parent || parent.type !== 'structure') return;
 
@@ -234,6 +253,23 @@ const DragDrop = {
         EmailState.selectBlock(block.id);
         EmailState.notify('blockAdded', block);
         Utils.showToast(`${blockType} added to column`);
+      }
+    } else if (componentId) {
+      const cMeta = EmailState.getStoredComponents().find(c => c.id === componentId);
+      if (cMeta && parent.columns[colIndex]) {
+        const clone = Utils.deepClone(cMeta.data);
+        clone.id = Utils.generateId(clone.type);
+        if (clone.columns) {
+          clone.columns.forEach(col => {
+            col.forEach(child => child.id = Utils.generateId(child.type));
+          });
+        }
+        parent.columns[colIndex].push(clone);
+        EmailState.saveSnapshot();
+        EmailState.save();
+        EmailState.selectBlock(clone.id);
+        EmailState.notify('blockAdded', clone);
+        Utils.showToast('Component added to column');
       }
     }
   },

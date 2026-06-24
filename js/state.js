@@ -605,6 +605,33 @@ const EmailState = {
     this.saveSnapshot();
     this.save();
     this.notify('reset');
+  },
+
+  // ---- Component Storage ----
+
+  saveComponent(block, name) {
+    let components = this.getStoredComponents();
+    const componentMeta = {
+      id: Utils.generateId('comp'),
+      name: name || (block.type.charAt(0).toUpperCase() + block.type.slice(1) + ' Component'),
+      date: new Date().getTime(),
+      data: Utils.deepClone(block)
+    };
+    components.push(componentMeta);
+    localStorage.setItem('emailBuilderComponents', JSON.stringify(components));
+    this.notify('componentsChanged');
+    return componentMeta;
+  },
+
+  getStoredComponents() {
+    return JSON.parse(localStorage.getItem('emailBuilderComponents') || '[]').sort((a,b) => b.date - a.date);
+  },
+
+  deleteStoredComponent(id) {
+    let components = this.getStoredComponents();
+    components = components.filter(c => c.id !== id);
+    localStorage.setItem('emailBuilderComponents', JSON.stringify(components));
+    this.notify('componentsChanged');
   }
 };
 
