@@ -42,6 +42,14 @@
           <button class="toolbar-btn" style="border:none; box-shadow:none; background:transparent; padding:4px; margin-left:-4px; color:#ccc;" id="btn-templates" title="Template Gallery">
             <svg style="width:12px;height:12px;color:#ccc;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
           </button>
+          
+          <!-- Figma AI Button -->
+          <button class="toolbar-btn" style="border:1px solid #8b5cf6; box-shadow:0 2px 4px rgba(139, 92, 246, 0.2); background:transparent; padding:4px 8px; margin-left:8px; border-radius:4px; color:#8b5cf6; display:flex; align-items:center; gap:4px; cursor:pointer;" id="btn-figma-ai" title="Create from Figma with AI">
+            <svg style="width:14px;height:14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3 6 6 1-4 4 1 6-6-3-6 3 1-6-4-4 6-1 3-6z" />
+            </svg>
+            <span style="font-size:13px; font-weight:600;">Figma AI</span>
+          </button>
         </div>
 
         <div class="toolbar__divider" style="height:20px; margin:0 4px; background:#e5e7eb;"></div>
@@ -206,6 +214,54 @@
     </div>
   </div>
 
+  <!-- ======================== FIGMA AI MODAL ======================== -->
+  <div class="modal-overlay" id="figma-modal">
+    <div class="modal" style="width: 500px; max-width: 90vw;">
+      <div class="modal__header">
+        <h2 class="modal__title">✨ Create from Figma (AI)</h2>
+        <button class="modal__close" id="figma-modal-close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="modal__body" style="display:flex; flex-direction:column; gap:16px;">
+        <p style="font-size:14px; color:var(--text-muted); line-height: 1.5;">
+          Connect your Figma account to automatically generate a newsletter layout using AI. The AI will look for an <strong>Email</strong> page/folder and an <strong>Email-1</strong> frame to extract images and layout.
+        </p>
+        
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-color);">Figma File URL</label>
+          <input type="text" id="figma-url-input" placeholder="https://www.figma.com/file/..." style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:14px; outline:none;" />
+        </div>
+
+        <div>
+          <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-color);">Personal Access Token</label>
+          <input type="password" id="figma-token-input" placeholder="figd_..." style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:14px; outline:none;" />
+          <p style="font-size:12px; color:#999; margin-top:6px;">Your token is saved locally in your browser.</p>
+        </div>
+
+        <div style="margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--border-color);">
+          <label style="display:block; font-size:12px; font-weight:600; margin-bottom:4px; color:var(--text-color);">OpenAI API Key (For AI Parsing)</label>
+          <input type="password" id="openai-key-input" placeholder="sk-..." style="width:100%; padding:10px 12px; border:1px solid var(--border-color); border-radius:6px; font-size:14px; outline:none;" />
+          <p style="font-size:12px; color:#999; margin-top:6px;">Required to accurately translate Figma layouts into email blocks.</p>
+        </div>
+      </div>
+      <div class="modal__footer" style="justify-content: flex-end;">
+        <button class="btn btn--primary" id="btn-figma-generate" style="background:#8b5cf6; border-color:#8b5cf6; color:white;">
+          Generate Newsletter with AI ✨
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== AI LOADING OVERLAY ======================== -->
+  <div class="ai-loading-overlay" id="ai-loading-overlay">
+    <div class="ai-loading-content">
+      <div class="ai-spinner"></div>
+      <h3 id="ai-loading-text" style="color:white; margin-top:16px; margin-bottom:4px;">Connecting to Figma...</h3>
+      <p style="font-size:14px; color:rgba(255,255,255,0.8); margin:0;" id="ai-loading-subtext">AI is preparing to analyze your design</p>
+    </div>
+  </div>
+
   <!-- ======================== TOAST CONTAINER ======================== -->
   <div class="toast-container" id="toast-container"></div>
 
@@ -219,6 +275,7 @@
   <script src="js/drag-drop.js"></script>
   <script src="js/properties-panel.js"></script>
   <script src="js/export.js"></script>
+  <script src="js/figma-ai.js"></script>
   <script src="js/app.js"></script>
 
 </body>
