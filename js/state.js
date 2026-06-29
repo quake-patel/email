@@ -338,7 +338,11 @@ const EmailState = {
     if (targetInfo.type === 'column') {
       const parent = this.data.blocks.find(b => b.id === targetInfo.parentId);
       if (parent && parent.columns[targetInfo.colIndex]) {
-        parent.columns[targetInfo.colIndex].push(block);
+        if (targetInfo.childIndex !== undefined) {
+          parent.columns[targetInfo.colIndex].splice(targetInfo.childIndex, 0, block);
+        } else {
+          parent.columns[targetInfo.colIndex].push(block);
+        }
       } else {
         // Fallback to end of top-level
         this.data.blocks.push(block);

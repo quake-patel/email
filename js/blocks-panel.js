@@ -179,11 +179,13 @@ const BlocksPanel = {
       container.innerHTML = this.renderStructures();
     } else if (this.activeTab === 'components') {
       container.innerHTML = this.renderStoredComponents();
+    } else if (this.activeTab === 'layers') {
+      container.innerHTML = this.renderLayers();
     } else {
       container.innerHTML = this.renderContentBlocks();
     }
 
-    this.bindDragEvents();
+    this.bindEvents();
   },
 
   /**
@@ -261,6 +263,69 @@ const BlocksPanel = {
   },
 
   /**
+   * Render layers (tree view of email)
+   */
+  renderLayers() {
+    let html = '<div class="panel-section-title" style="font-size:10px; font-weight:800; color:var(--text-muted); letter-spacing:1px; margin-bottom: 8px;">LAYERS</div>';
+    
+    const blocks = EmailState.getBlocks();
+    if (blocks.length === 0) {
+      html += '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-size: 12px;">No blocks added yet.</div>';
+      return html;
+    }
+
+    html += '<div class="layers-tree" style="display:flex; flex-direction:column; gap:2px; overflow-y:auto; padding-bottom: 20px;">';
+    
+    const selectedId = EmailState.data.selectedBlockId;
+
+    const renderNode = (node, depth, parentId = null, colIndex = null, childIndex = null) => {
+      const isSelected = selectedId === node.id;
+      const bg = isSelected ? 'rgba(139, 92, 246, 0.1)' : 'transparent';
+      const color = isSelected ? 'var(--accent-blue)' : 'var(--text-color)';
+      const weight = isSelected ? '600' : '400';
+      const pl = depth * 12 + 8;
+      
+      let icon = '';
+      let label = '';
+      if (node.type === 'structure') {
+        icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg>';
+        label = 'Structure';
+      } else {
+        const blockDef = this.contentBlocks.find(b => b.type === node.type);
+        icon = this.getIcon(blockDef ? blockDef.icon : 'html').replace('viewBox', 'style="width:14px;height:14px;" viewBox');
+        label = blockDef ? blockDef.label : node.type;
+      }
+      
+      let res = `
+        <div class="layer-item" draggable="true" data-id="${node.id}" data-parent-id="${parentId || ''}" data-col-index="${colIndex !== null ? colIndex : ''}" data-child-index="${childIndex !== null ? childIndex : ''}" style="display:flex; align-items:center; padding: 6px 8px; padding-left: ${pl}px; background:${bg}; color:${color}; font-weight:${weight}; cursor:pointer; border-radius:4px; font-size:12px; gap:8px;">
+          <span style="opacity:0.7; display:flex;">${icon}</span>
+          <span>${label}</span>
+        </div>
+      `;
+
+      if (node.columns) {
+        node.columns.forEach((col, idx) => {
+          res += `
+            <div class="layer-col" data-parent-id="${node.id}" data-col-index="${idx}" style="padding-left:${pl + 12}px; font-size:10px; color:var(--text-muted); margin:2px 0; min-height:16px;">Column ${idx + 1}</div>
+          `;
+          col.forEach((child, cidx) => {
+            res += renderNode(child, depth + 2, node.id, idx, cidx);
+          });
+        });
+      }
+      
+      return res;
+    };
+
+    blocks.forEach((b, idx) => {
+      html += renderNode(b, 0, null, null, idx);
+    });
+
+    html += '</div>';
+    return html;
+  },
+
+  /**
    * Switch tabs
    */
   setTab(tab) {
@@ -272,9 +337,114 @@ const BlocksPanel = {
   },
 
   /**
-   * Bind drag events to draggable items
+   * Bind events to rendered items
    */
-  bindDragEvents() {
+  bindEvents() {
+    // Layers click and drag events
+    if (this.activeTab === 'layers') {
+      const items = document.querySelectorAll('.layer-item');
+      items.forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          if (EmailState.data.selectedBlockId === id) {
+             EmailState.deselectAll();
+          } else {
+             EmailState.selectBlock(id);
+          }
+        });
+
+        item.addEventListener('dragstart', (e) => {
+          e.stopPropagation();
+          e.dataTransfer.setData('application/x-layer-id', item.dataset.id);
+          e.dataTransfer.effectAllowed = 'move';
+          item.style.opacity = '0.5';
+        });
+
+        item.addEventListener('dragend', () => {
+          item.style.opacity = '1';
+          document.querySelectorAll('.layer-drop-target').forEach(el => el.classList.remove('layer-drop-target'));
+        });
+
+        item.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          document.querySelectorAll('.layer-drop-target').forEach(el => el.classList.remove('layer-drop-target'));
+          
+          const rect = item.getBoundingClientRect();
+          const isTopHalf = (e.clientY - rect.top) < (rect.height / 2);
+          
+          item.style.borderTop = isTopHalf ? '2px solid var(--accent-green)' : '';
+          item.style.borderBottom = !isTopHalf ? '2px solid var(--accent-green)' : '';
+          item.classList.add('layer-drop-target');
+        });
+
+        item.addEventListener('dragleave', (e) => {
+          item.style.borderTop = '';
+          item.style.borderBottom = '';
+          item.classList.remove('layer-drop-target');
+        });
+
+        item.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          item.style.borderTop = '';
+          item.style.borderBottom = '';
+          item.classList.remove('layer-drop-target');
+
+          const draggedId = e.dataTransfer.getData('application/x-layer-id');
+          if (!draggedId || draggedId === item.dataset.id) return;
+
+          const rect = item.getBoundingClientRect();
+          const isTopHalf = (e.clientY - rect.top) < (rect.height / 2);
+
+          const parentId = item.dataset.parentId;
+          const colIndex = item.dataset.colIndex !== '' ? parseInt(item.dataset.colIndex) : null;
+          let childIndex = item.dataset.childIndex !== '' ? parseInt(item.dataset.childIndex) : null;
+
+          if (!isTopHalf && childIndex !== null) {
+            childIndex += 1;
+          }
+
+          if (parentId) {
+            EmailState.moveBlockById(draggedId, { type: 'column', parentId, colIndex, childIndex });
+          } else {
+            EmailState.moveBlockById(draggedId, { type: 'top', dropIndex: childIndex });
+          }
+        });
+      });
+
+      // Allow dropping into empty columns
+      document.querySelectorAll('.layer-col').forEach(colEl => {
+        colEl.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          document.querySelectorAll('.layer-drop-target').forEach(el => el.classList.remove('layer-drop-target'));
+          colEl.style.textDecoration = 'underline';
+          colEl.style.color = 'var(--accent-green)';
+          colEl.classList.add('layer-drop-target');
+        });
+        colEl.addEventListener('dragleave', (e) => {
+          colEl.style.textDecoration = '';
+          colEl.style.color = '';
+          colEl.classList.remove('layer-drop-target');
+        });
+        colEl.addEventListener('drop', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          colEl.style.textDecoration = '';
+          colEl.style.color = '';
+          colEl.classList.remove('layer-drop-target');
+          
+          const draggedId = e.dataTransfer.getData('application/x-layer-id');
+          if (!draggedId) return;
+
+          const parentId = colEl.dataset.parentId;
+          const colIndex = parseInt(colEl.dataset.colIndex);
+          EmailState.moveBlockById(draggedId, { type: 'column', parentId, colIndex, childIndex: 0 });
+        });
+      });
+    }
+
     // Structures
     document.querySelectorAll('.structure-card[draggable]').forEach(card => {
       card.addEventListener('dragstart', (e) => {
@@ -368,9 +538,15 @@ const BlocksPanel = {
       tab.addEventListener('click', () => this.setTab(tab.dataset.tab));
     });
     
-    // Listen to component changes to re-render if active
+    // Listen to state changes to re-render if active
     EmailState.on((changeType) => {
       if (changeType === 'componentsChanged' && this.activeTab === 'components') {
+        this.render();
+      }
+      if (this.activeTab === 'layers' && [
+        'blockAdded', 'blockRemoved', 'blockMoved', 'blockUpdated', 
+        'reset', 'undo', 'redo', 'blockSelected', 'blockDeselected'
+      ].includes(changeType)) {
         this.render();
       }
     });
