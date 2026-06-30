@@ -32,6 +32,7 @@ const EmailState = {
     },
     blocks: [],
     selectedBlockId: null,
+    selectedInlineImageId: null,
   },
 
   // Undo/redo
@@ -52,6 +53,7 @@ const EmailState = {
         const parsed = JSON.parse(saved);
         this.data = { ...this.data, ...parsed };
         this.data.selectedBlockId = null;
+        this.data.selectedInlineImageId = null;
       } catch (e) {
         console.warn('Failed to load saved state:', e);
       }
@@ -82,6 +84,7 @@ const EmailState = {
   saveSnapshot() {
     const snapshot = Utils.deepClone(this.data);
     delete snapshot.selectedBlockId;
+    delete snapshot.selectedInlineImageId;
 
     // Truncate forward history
     this.history = this.history.slice(0, this.historyIndex + 1);
@@ -101,6 +104,7 @@ const EmailState = {
     try {
       const toSave = Utils.deepClone(this.data);
       delete toSave.selectedBlockId;
+      delete toSave.selectedInlineImageId;
       localStorage.setItem('emailBuilderState', JSON.stringify(toSave));
     } catch (e) {
       console.warn('Failed to save state:', e);
@@ -114,7 +118,7 @@ const EmailState = {
     if (this.historyIndex <= 0) return false;
     this.historyIndex--;
     const snapshot = Utils.deepClone(this.history[this.historyIndex]);
-    this.data = { ...snapshot, selectedBlockId: null };
+    this.data = { ...snapshot, selectedBlockId: null, selectedInlineImageId: null };
     this.save();
     this.notify('undo');
     return true;
@@ -127,7 +131,7 @@ const EmailState = {
     if (this.historyIndex >= this.history.length - 1) return false;
     this.historyIndex++;
     const snapshot = Utils.deepClone(this.history[this.historyIndex]);
-    this.data = { ...snapshot, selectedBlockId: null };
+    this.data = { ...snapshot, selectedBlockId: null, selectedInlineImageId: null };
     this.save();
     this.notify('redo');
     return true;
@@ -161,6 +165,9 @@ const EmailState = {
     const removed = this.data.blocks.splice(idx, 1)[0];
     if (this.data.selectedBlockId === blockId) {
       this.data.selectedBlockId = null;
+    }
+    if (this.data.selectedInlineImageId) {
+      this.data.selectedInlineImageId = null;
     }
     this.saveSnapshot();
     this.save();
@@ -440,7 +447,18 @@ const EmailState = {
    */
   selectBlock(blockId) {
     this.data.selectedBlockId = blockId;
+    this.data.selectedInlineImageId = null;
+    this.save();
     this.notify('blockSelected', blockId);
+  },
+
+  /**
+   * Select an inline image
+   */
+  selectInlineImage(imageId) {
+    this.data.selectedInlineImageId = imageId;
+    this.save();
+    this.notify('inlineImageSelected', imageId);
   },
 
   /**
@@ -448,6 +466,7 @@ const EmailState = {
    */
   deselectAll() {
     this.data.selectedBlockId = null;
+    this.data.selectedInlineImageId = null;
     this.notify('blockDeselected');
   },
 

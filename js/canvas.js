@@ -115,7 +115,7 @@ const Canvas = {
 
     const parentInfo = EmailState.findParent(block.id);
     const parentButton = parentInfo 
-      ? `<button class="canvas-block__action-btn" data-action="select-parent" title="Select Row" style="width:auto; height:auto; padding:4px 12px; font-size:11px; font-weight:600; background:var(--accent-blue); color:white; border-radius:12px; border:none; white-space:nowrap; letter-spacing:0.3px; margin-right: 4px;">
+      ? `<button class="canvas-block__action-btn" data-action="select-parent" title="Select Row" style="width:auto; height:22px; padding:0 6px; font-size:10px; font-weight:600; background:rgba(255,255,255,0.2); color:white; border-radius:4px; border:none; white-space:nowrap; margin-right:2px;">
            Select Row
          </button>`
       : '';
@@ -138,7 +138,10 @@ const Canvas = {
 
     return `
       <div class="canvas-block ${selectedClass} ${hiddenClass}" data-block-id="${block.id}" data-block-type="${block.type}">
-        <div class="canvas-block__type-label" style="pointer-events:auto;cursor:pointer;" title="Select ${typeLabel}">${typeLabel}</div>
+        <div class="canvas-block__type-label" style="pointer-events:auto;cursor:pointer;" title="Select ${typeLabel}">
+          ${typeLabel}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;opacity:0.7;"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+        </div>
         ${hiddenBadge}
         <div class="canvas-block__actions">
           ${parentButton}
@@ -262,7 +265,10 @@ const Canvas = {
 
     return `
       <div class="canvas-block ${selectedClass} ${hiddenClass || ''}" data-block-id="${block.id}" data-block-type="structure">
-        <div class="canvas-block__type-label" style="pointer-events:auto;cursor:pointer;" title="Select Structure">Structure${shouldStack ? ' (stacked)' : ''}</div>
+        <div class="canvas-block__type-label" style="pointer-events:auto;cursor:pointer;" title="Select Structure">
+          Structure${shouldStack ? ' (stacked)' : ''}
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;opacity:0.7;"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+        </div>
         ${hiddenBadge}
         <div class="canvas-block__actions">
           <button class="canvas-block__action-btn" data-action="duplicate" title="Duplicate">
@@ -298,7 +304,7 @@ const Canvas = {
     const marginStr = (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) && (isMobile && block.mobileMargin ? block.mobileMargin : block.margin) !== '0' ? `margin:${(isMobile && block.mobileMargin ? block.mobileMargin : block.margin)};` : '';
     return `
       <div style="${marginStr}background-color:${bgColor};padding:${padding};font-family:${fontFamily};font-size:${fontSize};color:${textColor};text-align:${align};line-height:${lineHeight};${borderStyle}${radiusStyle}">
-        <div class="editable-text" data-block-id="${block.id}">${block.content}</div>
+        <${block.tag || 'div'} class="editable-text" data-block-id="${block.id}" style="margin:0; outline:none;">${block.content}</${block.tag || 'div'}>
       </div>`;
   },
 
@@ -454,6 +460,22 @@ const Canvas = {
 
         // Don't select if clicking action buttons
         if (e.target.closest('.canvas-block__action-btn')) return;
+
+        // If clicking an inline image inside text, select the inline image instead
+        if (e.target.tagName === 'IMG' && e.target.closest('.editable-text')) {
+          e.stopPropagation();
+          e.preventDefault();
+          const img = e.target;
+          const editable = img.closest('.editable-text');
+          
+          if (!img.dataset.inlineId) {
+            img.dataset.inlineId = 'img_' + Math.random().toString(36).substr(2, 9);
+            EmailState.updateBlock(el.dataset.blockId, { content: editable.innerHTML });
+          }
+          EmailState.selectInlineImage(img.dataset.inlineId);
+          return;
+        }
+
         // Don't select if editing text
         if (e.target.closest('[contenteditable="true"]')) return;
         
@@ -518,8 +540,8 @@ const Canvas = {
         }
       });
     });
-
-    // Inline text editing
+    
+    // Setup inline text editing
     document.querySelectorAll('.editable-text').forEach(el => {
       el.addEventListener('dblclick', (e) => {
         e.stopPropagation();

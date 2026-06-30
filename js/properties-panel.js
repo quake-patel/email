@@ -15,15 +15,129 @@ const PropertiesPanel = {
     if (this.activeTab === 'global') {
       body.innerHTML = this.renderGlobalStyles();
     } else {
-      const selected = EmailState.getSelectedBlock();
-      if (selected) {
-        body.innerHTML = this.renderBlockProperties(selected);
+      if (EmailState.data.selectedInlineImageId) {
+        body.innerHTML = this.renderInlineImageProps(EmailState.data.selectedInlineImageId);
       } else {
-        body.innerHTML = this.renderEmptyState();
+        const selected = EmailState.getSelectedBlock();
+        if (selected) {
+          body.innerHTML = this.renderBlockProperties(selected);
+        } else {
+          body.innerHTML = this.renderEmptyState();
+        }
       }
     }
 
     this.bindEvents();
+  },
+
+  /**
+   * Render properties for a selected inline image
+   */
+  renderInlineImageProps(imageId) {
+    const img = document.querySelector(`img[data-inline-id="${imageId}"]`);
+    if (!img) return this.renderEmptyState();
+
+    const src = img.getAttribute('src') || '';
+    const width = img.style.width || 'auto';
+    const height = img.style.height || '1.2em';
+    const marginLeft = img.style.marginLeft || '0';
+    const marginRight = img.style.marginRight || '0';
+    const marginTop = img.style.marginTop || '0';
+    const marginBottom = img.style.marginBottom || '0';
+    
+    const paddingTop = img.style.paddingTop || '0';
+    const paddingBottom = img.style.paddingBottom || '0';
+    const paddingLeft = img.style.paddingLeft || '0';
+    const paddingRight = img.style.paddingRight || '0';
+    
+    const vAlign = img.style.verticalAlign || 'middle';
+    const display = img.style.display || 'inline-block';
+    const cssFloat = img.style.float || 'none';
+    
+    // Check if it has mobile hide class
+    const isHiddenMobile = img.classList.contains('hide-on-mobile');
+    const isHiddenDesktop = img.classList.contains('hide-on-desktop');
+
+    const numericWidth = parseInt(img.style.width) || '';
+    const radius = parseInt(img.style.borderRadius) || 0;
+    
+    // Helper for number inputs
+    const numGroup = (val, prop) => `
+      <div class="prop-number-group">
+        <button class="prop-number-btn btn-minus" data-target="${prop}">-</button>
+        <input class="prop-number-input inline-img-prop" type="text" value="${val}" data-img-prop="${prop}" id="input-${prop}" />
+        <button class="prop-number-btn btn-plus" data-target="${prop}">+</button>
+      </div>`;
+
+    return `
+      <div class="prop-group">
+        <div class="prop-group__title">Inline Image</div>
+        
+        <div class="prop-row" style="flex-direction:column;align-items:stretch;">
+          <span class="prop-row__label" style="margin-bottom:4px;">Image Source URL</span>
+          <input class="prop-input inline-img-prop" type="url" value="${src}" data-img-prop="src" placeholder="https://..." />
+        </div>
+
+        <div class="prop-row">
+          <span class="prop-row__label">Width</span>
+          ${numGroup(numericWidth, 'width')}
+        </div>
+        
+        <div class="prop-row">
+          <span class="prop-row__label">Text Wrapping</span>
+          <div class="text-wrap-group">
+            <button class="text-wrap-btn ${cssFloat === 'none' && display !== 'block' ? 'active' : ''}" data-wrap="inline" title="Inline">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+            </button>
+            <button class="text-wrap-btn ${cssFloat === 'left' ? 'active' : ''}" data-wrap="left" title="Float Left">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="8" width="6" height="8" rx="1"/><line x1="14" y1="8" x2="20" y2="8"/><line x1="14" y1="12" x2="20" y2="12"/><line x1="14" y1="16" x2="20" y2="16"/><line x1="4" y1="4" x2="20" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+            </button>
+            <button class="text-wrap-btn ${cssFloat === 'right' ? 'active' : ''}" data-wrap="right" title="Float Right">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="14" y="8" width="6" height="8" rx="1"/><line x1="4" y1="8" x2="10" y2="8"/><line x1="4" y1="12" x2="10" y2="12"/><line x1="4" y1="16" x2="10" y2="16"/><line x1="4" y1="4" x2="20" y2="4"/><line x1="4" y1="20" x2="20" y2="20"/></svg>
+            </button>
+            <button class="text-wrap-btn ${display === 'block' && cssFloat === 'none' ? 'active' : ''}" data-wrap="block" title="Block">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="prop-row">
+          <span class="prop-row__label">Border Radius</span>
+          ${numGroup(radius, 'borderRadius')}
+        </div>
+        
+        <div class="prop-group__title" style="margin-top:20px;">Margins on Desktop</div>
+        <div class="prop-cross-layout">
+          <div class="prop-cross-top">${numGroup(parseInt(marginTop) || 0, 'marginTop')}</div>
+          <div class="prop-cross-left">${numGroup(parseInt(marginLeft) || 0, 'marginLeft')}</div>
+          <div class="prop-cross-center">
+            <svg style="width:16px;height:16px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <div class="prop-cross-right">${numGroup(parseInt(marginRight) || 0, 'marginRight')}</div>
+          <div class="prop-cross-bottom">${numGroup(parseInt(marginBottom) || 0, 'marginBottom')}</div>
+        </div>
+        
+        <div class="prop-group__title" style="margin-top:20px;">Visibility</div>
+        <div class="prop-row">
+          <span class="prop-row__label">Hide on Desktop</span>
+          <div class="prop-toggle inline-img-toggle ${isHiddenDesktop ? 'active' : ''}" data-img-toggle="hide-on-desktop">
+            <div class="prop-toggle__knob"></div>
+          </div>
+        </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Hide on Mobile</span>
+          <div class="prop-toggle inline-img-toggle ${isHiddenMobile ? 'active' : ''}" data-img-toggle="hide-on-mobile">
+            <div class="prop-toggle__knob"></div>
+          </div>
+        </div>
+        
+        <div class="prop-row" style="margin-top: 24px; justify-content: center;">
+           <button class="prop-input" id="btn-delete-inline-img" style="color: #ef4444; border-color: #ef4444; width: 100%;">Delete Inline Image</button>
+        </div>
+        <div class="prop-row" style="margin-top: 8px; justify-content: center;">
+           <button class="prop-input" id="btn-back-to-text" style="width: 100%;">Back to Text Properties</button>
+        </div>
+      </div>`;
   },
 
   /**
@@ -67,6 +181,17 @@ const PropertiesPanel = {
         <div class="prop-group__title">Text Block</div>
         ${this.renderAlignmentRow(block.align || 'left', 'text-align')}
         <div class="prop-row" style="margin-top:4px;">
+          <span class="prop-row__label">HTML Tag</span>
+          <select class="prop-input prop-input--sm" data-prop="tag">
+            <option value="div" ${block.tag === 'div' || !block.tag ? 'selected' : ''}>Normal</option>
+            <option value="p" ${block.tag === 'p' ? 'selected' : ''}>Paragraph (p)</option>
+            <option value="h1" ${block.tag === 'h1' ? 'selected' : ''}>Heading 1 (h1)</option>
+            <option value="h2" ${block.tag === 'h2' ? 'selected' : ''}>Heading 2 (h2)</option>
+            <option value="h3" ${block.tag === 'h3' ? 'selected' : ''}>Heading 3 (h3)</option>
+            <option value="h4" ${block.tag === 'h4' ? 'selected' : ''}>Heading 4 (h4)</option>
+          </select>
+        </div>
+        <div class="prop-row" style="margin-top:4px;">
           <span class="prop-row__label">Text Color</span>
           ${this.renderColorPicker(block.textColor || '', 'textColor')}
         </div>
@@ -98,6 +223,17 @@ const PropertiesPanel = {
         <div class="prop-row">
           <span class="prop-row__label">Padding (Inside)</span>
           <input class="prop-input prop-input--md" type="text" value="${block.padding || '10px 20px'}" data-prop="padding" />
+        </div>
+        <div class="prop-group">
+          <div class="prop-group__title">Formatting & Insert</div>
+          <div class="prop-row" style="gap: 6px;">
+            <button class="prop-input rte-btn" data-rte-action="bold" title="Bold" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;font-weight:bold;cursor:pointer;">B</button>
+            <button class="prop-input rte-btn" data-rte-action="italic" title="Italic" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;font-style:italic;cursor:pointer;">I</button>
+            <button class="prop-input rte-btn" data-rte-action="underline" title="Underline" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;text-decoration:underline;cursor:pointer;">U</button>
+            <button class="prop-input rte-btn" data-rte-action="link" title="Insert Link" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg></button>
+            <button class="prop-input rte-btn" data-rte-action="image" title="Insert Image" style="width:32px;height:32px;padding:0;display:flex;align-items:center;justify-content:center;cursor:pointer;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></button>
+          </div>
+          <p style="font-size:11px;color:var(--text-muted);line-height:1.4;margin-top:8px;">Highlight text and use these tools to format or insert inline elements.</p>
         </div>
       </div>
       <div class="prop-group">
@@ -343,10 +479,20 @@ const PropertiesPanel = {
   },
 
   renderStructureProps(block) {
-    let layoutHtml = '';
+    let colsHtml = `
+      <div class="prop-row">
+        <span class="prop-row__label">Columns</span>
+        <select class="prop-select" id="prop-columns" style="width: 140px;">
+          <option value="1" ${block.columns.length === 1 ? 'selected' : ''}>1 Column</option>
+          <option value="2" ${block.columns.length === 2 ? 'selected' : ''}>2 Columns</option>
+          <option value="3" ${block.columns.length === 3 ? 'selected' : ''}>3 Columns</option>
+          <option value="4" ${block.columns.length === 4 ? 'selected' : ''}>4 Columns</option>
+        </select>
+      </div>`;
+
     if (block.columns.length === 2) {
       layoutHtml = `
-        <div class="prop-row">
+        <div class="prop-row" style="margin-top:4px;">
           <span class="prop-row__label">Layout</span>
           <select class="prop-select" id="prop-layout" style="width: 140px;">
             <option value="50,50" ${block.layout.join(',') === '50,50' ? 'selected' : ''}>50% / 50%</option>
@@ -354,11 +500,13 @@ const PropertiesPanel = {
             <option value="67,33" ${block.layout.join(',') === '67,33' ? 'selected' : ''}>67% / 33%</option>
             <option value="25,75" ${block.layout.join(',') === '25,75' ? 'selected' : ''}>25% / 75%</option>
             <option value="75,25" ${block.layout.join(',') === '75,25' ? 'selected' : ''}>75% / 25%</option>
+            <option value="15,85" ${block.layout.join(',') === '15,85' ? 'selected' : ''}>15% / 85%</option>
+            <option value="85,15" ${block.layout.join(',') === '85,15' ? 'selected' : ''}>85% / 15%</option>
           </select>
         </div>`;
     } else if (block.columns.length === 3) {
       layoutHtml = `
-        <div class="prop-row">
+        <div class="prop-row" style="margin-top:4px;">
           <span class="prop-row__label">Layout</span>
           <select class="prop-select" id="prop-layout" style="width: 140px;">
             <option value="33,33,34" ${block.layout.join(',') === '33,33,34' ? 'selected' : ''}>33.3% / 33.3% / 33.3%</option>
@@ -367,11 +515,17 @@ const PropertiesPanel = {
             <option value="25,50,25" ${block.layout.join(',') === '25,50,25' ? 'selected' : ''}>25% / 50% / 25%</option>
           </select>
         </div>`;
+    } else if (block.columns.length === 4) {
+      layoutHtml = `
+        <div class="prop-row" style="margin-top:4px;">
+          <span class="prop-row__label">Layout</span>
+          <span style="font-size:12px;color:var(--text-muted);">25% / 25% / 25% / 25%</span>
+        </div>`;
     } else {
       layoutHtml = `
-        <div class="prop-row">
+        <div class="prop-row" style="margin-top:4px;">
           <span class="prop-row__label">Layout</span>
-          <span style="font-size:12px;color:var(--text-muted);">${block.layout.join(' / ')}%</span>
+          <span style="font-size:12px;color:var(--text-muted);">100%</span>
         </div>`;
     }
 
@@ -399,6 +553,7 @@ const PropertiesPanel = {
           <span class="prop-row__label">Col Gap (Vert)</span>
           <input class="prop-input prop-input--sm" type="number" value="${block.colGapV || 0}" data-prop="colGapV" placeholder="0" />
         </div>
+        ${colsHtml}
         ${layoutHtml}
         <div class="prop-group__title" style="margin-top: 20px;">Column Styles (Equal Height)</div>
         ${block.layout.map((width, i) => `
@@ -750,6 +905,210 @@ const PropertiesPanel = {
       });
     }
 
+    // Columns change
+    const colsSelect = document.getElementById('prop-columns');
+    if (colsSelect && blockId) {
+      colsSelect.addEventListener('change', (e) => {
+        const newCount = parseInt(e.target.value, 10);
+        let currentCols = selectedBlock.columns || [];
+        
+        if (newCount > currentCols.length) {
+          for (let i = currentCols.length; i < newCount; i++) {
+            currentCols.push([]);
+          }
+        } else if (newCount < currentCols.length) {
+          const lastValidCol = currentCols[newCount - 1];
+          for (let i = newCount; i < currentCols.length; i++) {
+            lastValidCol.push(...currentCols[i]);
+          }
+          currentCols = currentCols.slice(0, newCount);
+        }
+        
+        let layout = [];
+        if (newCount === 1) layout = [100];
+        else if (newCount === 2) layout = [50, 50];
+        else if (newCount === 3) layout = [33, 33, 34];
+        else if (newCount === 4) layout = [25, 25, 25, 25];
+
+        EmailState.updateBlockWithSnapshot(blockId, { columns: currentCols, layout });
+        Canvas.render();
+        PropertiesPanel.render(selectedBlock);
+      });
+    }
+
+    // RTE formatting buttons
+    body.querySelectorAll('.rte-btn').forEach(btn => {
+      // Prevent losing focus on the text editor when clicking formatting buttons
+      btn.addEventListener('mousedown', (e) => e.preventDefault());
+      
+      btn.addEventListener('click', (e) => {
+        const action = btn.dataset.rteAction;
+        let val = null;
+        if (action === 'link') {
+          val = prompt('Enter link URL (e.g. https://example.com):');
+          if (!val) return;
+          document.execCommand('createLink', false, val);
+        } else if (action === 'image') {
+          val = prompt('Enter image URL:');
+          if (!val) return;
+          const sel = window.getSelection();
+          if (sel.rangeCount > 0) {
+            sel.getRangeAt(0).collapse(true); // Collapse to start so it doesn't replace text
+          }
+          const imgHtml = `<img src="${val}" style="height: 1.2em; width: auto; vertical-align: middle; margin-right: 6px; display: inline-block;" alt="icon" />`;
+          document.execCommand('insertHTML', false, imgHtml);
+        } else {
+          document.execCommand(action, false, null);
+        }
+
+        // Save the updated HTML back to the block state
+        if (blockId) {
+          const editable = document.querySelector(`.editable-text[data-block-id="${blockId}"]`);
+          if (editable) {
+            EmailState.updateBlockWithSnapshot(blockId, { content: editable.innerHTML });
+          }
+        }
+      });
+    });
+
+    // Inline Image properties handling
+    const imageId = EmailState.data.selectedInlineImageId;
+    if (imageId) {
+      body.querySelectorAll('.inline-img-prop').forEach(input => {
+        const handler = Utils.debounce(() => {
+          const prop = input.dataset.imgProp;
+          const img = document.querySelector(`img[data-inline-id="${imageId}"]`);
+          if (!img) return;
+          
+          if (prop === 'src') {
+            img.setAttribute('src', input.value);
+          } else {
+            img.style[prop] = input.value;
+          }
+          
+          const editable = img.closest('.editable-text');
+          if (editable) {
+            const blockEl = editable.closest('.canvas-block');
+            if (blockEl) {
+              EmailState.updateBlockWithSnapshot(blockEl.dataset.blockId, { content: editable.innerHTML });
+            }
+          }
+        }, 300);
+        
+        input.addEventListener('input', handler);
+        input.addEventListener('change', handler);
+      });
+      
+      // Text wrap buttons
+      body.querySelectorAll('.text-wrap-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          body.querySelectorAll('.text-wrap-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const wrap = btn.dataset.wrap;
+          const img = document.querySelector(`img[data-inline-id="${imageId}"]`);
+          if (!img) return;
+          
+          if (wrap === 'block') {
+            img.style.display = 'block';
+            img.style.float = 'none';
+          } else if (wrap === 'left') {
+            img.style.display = 'inline-block';
+            img.style.float = 'left';
+            img.style.marginRight = img.style.marginRight || '10px';
+          } else if (wrap === 'right') {
+            img.style.display = 'inline-block';
+            img.style.float = 'right';
+            img.style.marginLeft = img.style.marginLeft || '10px';
+          } else {
+            img.style.display = 'inline-block';
+            img.style.float = 'none'; // reset float
+          }
+          
+          const editable = img.closest('.editable-text');
+          if (editable) {
+            const blockEl = editable.closest('.canvas-block');
+            if (blockEl) {
+              EmailState.updateBlockWithSnapshot(blockEl.dataset.blockId, { content: editable.innerHTML });
+            }
+          }
+        });
+      });
+      
+      // Inline image number +/- buttons
+      body.querySelectorAll('.prop-number-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const isPlus = btn.classList.contains('btn-plus');
+          const target = btn.dataset.target;
+          const input = document.getElementById(`input-${target}`);
+          if (!input) return;
+          
+          let val = parseInt(input.value) || 0;
+          val += isPlus ? 1 : -1;
+          
+          // Width / radius can't be negative
+          if ((target === 'width' || target === 'borderRadius') && val < 0) {
+            val = 0;
+          }
+          
+          input.value = val + 'px'; // assume px for incrementing
+          
+          // Manually dispatch input event to trigger the save handler
+          input.dispatchEvent(new Event('input'));
+        });
+      });
+      
+      // Inline image toggles (hide on mobile/desktop)
+      body.querySelectorAll('.inline-img-toggle').forEach(toggle => {
+        toggle.addEventListener('click', (e) => {
+          const isActive = toggle.classList.toggle('active');
+          const className = toggle.dataset.imgToggle;
+          const img = document.querySelector(`img[data-inline-id="${imageId}"]`);
+          if (!img) return;
+          
+          if (isActive) {
+            img.classList.add(className);
+          } else {
+            img.classList.remove(className);
+          }
+          
+          const editable = img.closest('.editable-text');
+          if (editable) {
+            const blockEl = editable.closest('.canvas-block');
+            if (blockEl) {
+              EmailState.updateBlockWithSnapshot(blockEl.dataset.blockId, { content: editable.innerHTML });
+            }
+          }
+        });
+      });
+      
+      const deleteBtn = document.getElementById('btn-delete-inline-img');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => {
+          const img = document.querySelector(`img[data-inline-id="${imageId}"]`);
+          if (!img) return;
+          const editable = img.closest('.editable-text');
+          img.remove();
+          
+          if (editable) {
+            const blockEl = editable.closest('.canvas-block');
+            if (blockEl) {
+              EmailState.updateBlockWithSnapshot(blockEl.dataset.blockId, { content: editable.innerHTML });
+            }
+          }
+          EmailState.selectInlineImage(null);
+          PropertiesPanel.render();
+        });
+      }
+      
+      const backBtn = document.getElementById('btn-back-to-text');
+      if (backBtn) {
+        backBtn.addEventListener('click', () => {
+          EmailState.selectInlineImage(null);
+          PropertiesPanel.render();
+        });
+      }
+    }
+
     // Email metadata inputs (subject line, preview text)
     body.querySelectorAll('[data-meta]').forEach(input => {
       const handler = Utils.debounce(() => {
@@ -996,7 +1355,14 @@ const PropertiesPanel = {
 
     // Listen to state changes
     EmailState.on((changeType) => {
-      if (changeType === 'blockSelected' || changeType === 'blockDeselected') {
+      if (changeType === 'inlineImageSelected' || changeType === 'blockSelected' || changeType === 'blockDeselected') {
+        // Handle visual selection outline for inline images
+        document.querySelectorAll('.inline-image-selected').forEach(img => img.classList.remove('inline-image-selected'));
+        if (EmailState.data.selectedInlineImageId) {
+          const selectedImg = document.querySelector(`img[data-inline-id="${EmailState.data.selectedInlineImageId}"]`);
+          if (selectedImg) selectedImg.classList.add('inline-image-selected');
+        }
+
         if (this.activeTab === 'properties') {
           this.render();
         }

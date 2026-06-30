@@ -370,9 +370,9 @@ ${cols}
     const padding = block.padding !== undefined ? block.padding : '10px 20px';
     let contentTd = `
                               <td class="es-p-td" align="${align}" style="${bgColor}padding:${padding};Margin:0;${borderStyle}${radiusStyle}">
-                                <div style="font-family:${fontFamily};font-size:${fontSize};color:${textColor};line-height:${lineHeight};text-align:${align}">
+                                <${block.tag || 'div'} style="font-family:${fontFamily};font-size:${fontSize};color:${textColor};line-height:${lineHeight};text-align:${align};Margin:0;">
                                   ${content}
-                                </div>
+                                </${block.tag || 'div'}>
                               </td>`;
 
     if (block.margin && block.margin !== '0') {

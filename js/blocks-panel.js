@@ -13,6 +13,8 @@ const BlocksPanel = {
     { id: '2col-67-33', label: '2 Columns (67/33)', columns: [67, 33] },
     { id: '2col-25-75', label: '2 Columns (25/75)', columns: [25, 75] },
     { id: '2col-75-25', label: '2 Columns (75/25)', columns: [75, 25] },
+    { id: '2col-15-85', label: '2 Columns (15/85) - Icon Left', columns: [15, 85] },
+    { id: '2col-85-15', label: '2 Columns (85/15) - Icon Right', columns: [85, 15] },
     { id: '3col', label: '3 Columns', columns: [33, 33, 34] },
     { id: '4col', label: '4 Columns', columns: [25, 25, 25, 25] },
   ],
