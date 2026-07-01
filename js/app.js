@@ -43,6 +43,9 @@ const App = {
     // 8. Bind responsive preview toggle
     this.bindResponsiveToggle();
 
+    // 8.5 Bind sidebar resizers
+    this.bindResizers();
+
     // 9. Set template name
     const nameInput = document.getElementById('template-name-input');
     if (nameInput) {
@@ -389,6 +392,64 @@ const App = {
         Utils.showToast(`${config.label} preview — ${config.width}px`);
       });
     });
+  },
+
+  /**
+   * Bind sidebar drag-to-resize
+   */
+  bindResizers() {
+    const resizerLeft = document.getElementById('resizer-left');
+    const resizerRight = document.getElementById('resizer-right');
+    const root = document.documentElement;
+    let isResizing = false;
+    let currentResizer = null;
+
+    const onMouseMove = (e) => {
+      if (!isResizing) return;
+      e.preventDefault();
+      
+      if (currentResizer === 'left') {
+        const newWidth = Math.max(150, Math.min(e.clientX, 500));
+        root.style.setProperty('--panel-left-width', `${newWidth}px`);
+      } else if (currentResizer === 'right') {
+        const newWidth = Math.max(200, Math.min(window.innerWidth - e.clientX, 600));
+        root.style.setProperty('--panel-right-width', `${newWidth}px`);
+      }
+    };
+
+    const onMouseUp = () => {
+      if (isResizing) {
+        isResizing = false;
+        currentResizer = null;
+        document.body.style.cursor = 'default';
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+        if (resizerLeft) resizerLeft.classList.remove('is-resizing');
+        if (resizerRight) resizerRight.classList.remove('is-resizing');
+      }
+    };
+
+    if (resizerLeft) {
+      resizerLeft.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        currentResizer = 'left';
+        document.body.style.cursor = 'col-resize';
+        resizerLeft.classList.add('is-resizing');
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+    }
+
+    if (resizerRight) {
+      resizerRight.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        currentResizer = 'right';
+        document.body.style.cursor = 'col-resize';
+        resizerRight.classList.add('is-resizing');
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+      });
+    }
   }
 };
 
