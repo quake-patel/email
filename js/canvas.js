@@ -51,7 +51,30 @@ const Canvas = {
       wrapper.style.maxWidth = '';
     }
 
+    this.renderGlobalCSS();
     this.bindBlockEvents();
+  },
+
+  renderGlobalCSS() {
+    let styleTag = document.getElementById('canvas-global-styles');
+    if (!styleTag) {
+      styleTag = document.createElement('style');
+      styleTag.id = 'canvas-global-styles';
+      document.head.appendChild(styleTag);
+    }
+    const gs = EmailState.data.globalStyles;
+    const isMobile = this.getViewport() === 'mobile';
+    
+    const h1Size = (isMobile && gs.mobileH1Size) ? gs.mobileH1Size : gs.h1Size;
+    const h2Size = (isMobile && gs.mobileH2Size) ? gs.mobileH2Size : gs.h2Size;
+    const h3Size = (isMobile && gs.mobileH3Size) ? gs.mobileH3Size : gs.h3Size;
+    const bodySize = (isMobile && gs.mobileFontSize) ? gs.mobileFontSize : gs.fontSize;
+    
+    styleTag.innerHTML = `
+      #canvas-email h1 { font-size: ${h1Size} !important; color: ${gs.h1Color} !important; margin: 0; }
+      #canvas-email h2 { font-size: ${h2Size} !important; color: ${gs.h2Color} !important; margin: 0; }
+      #canvas-email h3 { font-size: ${h3Size} !important; color: ${gs.h3Color} !important; margin: 0; }
+    `;
   },
 
   /**
@@ -290,7 +313,7 @@ const Canvas = {
   renderTextBlock(block) {
     const gs = EmailState.data.globalStyles;
     const isMobile = window.App && App.currentViewport === 'mobile';
-    const fontSize = (isMobile && block.mobileFontSize) ? block.mobileFontSize : (block.fontSize || gs.fontSize);
+    const fontSize = (isMobile && (block.mobileFontSize || gs.mobileFontSize)) ? (block.mobileFontSize || gs.mobileFontSize) : (block.fontSize || gs.fontSize);
     const align = (isMobile && block.mobileAlign) ? block.mobileAlign : (block.align || 'left');
     const bgColor = block.bgColor && block.bgColor !== 'transparent' ? block.bgColor : 'transparent';
     const textColor = block.textColor || gs.textColor;
@@ -353,7 +376,7 @@ const Canvas = {
       background-color:${block.bgColor || gs.buttonBgColor};
       color:${block.textColor || gs.buttonTextColor};
       font-family:${block.fontFamily || gs.fontFamily};
-      font-size:${block.fontSize || gs.buttonFontSize};
+      font-size:${(isMobile && (block.mobileFontSize || gs.mobileButtonFontSize)) ? (block.mobileFontSize || gs.mobileButtonFontSize) : (block.fontSize || gs.buttonFontSize)};
       font-weight:${block.fontWeight || 'bold'};
       text-decoration:none;
       padding:12px 24px;
@@ -428,15 +451,18 @@ const Canvas = {
     const isMobile = window.App && App.currentViewport === 'mobile';
     const gs = EmailState.data.globalStyles;
     let items = '';
+    const fontSize = (isMobile && (block.mobileFontSize || gs.mobileFontSize)) ? (block.mobileFontSize || gs.mobileFontSize) : (block.fontSize || '14px');
+
     (block.items || []).forEach((item, i) => {
       if (i > 0 && !block.fullWidth) items += '<span style="color:#ccc;margin:0 5px;">|</span>';
       const flexStyle = block.fullWidth ? 'flex:1;text-align:center;' : '';
-      items += `<a href="${item.link || '#'}" target="_blank" style="font-family:${block.fontFamily || gs.fontFamily};font-size:${block.fontSize || '14px'};color:${block.color || '#232429'};text-decoration:none;font-weight:${block.fontWeight || '600'};letter-spacing:0.5px;${flexStyle}">${item.text}</a>`;
+      items += `<a href="${item.link || '#'}" target="_blank" style="font-family:${block.fontFamily || gs.fontFamily};font-size:${fontSize};color:${block.color || '#232429'};text-decoration:none;font-weight:${block.fontWeight || '600'};letter-spacing:0.5px;${flexStyle}">${item.text}</a>`;
     });
     
+    const blockWidth = block.width || '100%';
     const containerStyle = block.fullWidth
-      ? `padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '10px 20px'};display:flex;justify-content:space-between;width:100%;box-sizing:border-box;`
-      : `padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '10px 20px'};text-align:${block.align || 'center'};`;
+      ? `padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '10px 20px'};display:flex;justify-content:space-between;width:${blockWidth};box-sizing:border-box;margin:0 auto;`
+      : `padding:${(isMobile && block.mobilePadding ? block.mobilePadding : block.padding) || '10px 20px'};text-align:${block.align || 'center'};width:${blockWidth};margin:0 auto;`;
       
     return `<div style="${containerStyle}">${items}</div>`;
   },

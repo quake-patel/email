@@ -286,6 +286,7 @@ const PropertiesPanel = {
   },
 
   renderButtonProps(block) {
+    const gs = EmailState.data.globalStyles;
     return `
       <div class="prop-group">
         <div class="prop-group__title">Button Block</div>
@@ -299,15 +300,15 @@ const PropertiesPanel = {
         </div>
         <div class="prop-row" style="margin-top:12px;">
           <span class="prop-row__label">Background</span>
-          ${this.renderColorPicker(block.bgColor || '#f4001e', 'bgColor')}
+          ${this.renderColorPicker(block.bgColor || gs.buttonBgColor, 'bgColor')}
         </div>
         <div class="prop-row">
           <span class="prop-row__label">Text Color</span>
-          ${this.renderColorPicker(block.textColor || '#ffffff', 'textColor')}
+          ${this.renderColorPicker(block.textColor || gs.buttonTextColor, 'textColor')}
         </div>
         <div class="prop-row">
           <span class="prop-row__label">Font Size</span>
-          <input class="prop-input prop-input--sm" type="text" value="${block.fontSize || '16px'}" data-prop="fontSize" />
+          <input class="prop-input prop-input--sm" type="text" value="${block.fontSize || ''}" data-prop="fontSize" placeholder="Inherit" />
         </div>
         <div class="prop-row">
           <span class="prop-row__label">Mobile Size</span>
@@ -444,6 +445,14 @@ const PropertiesPanel = {
         <div class="prop-row">
           <span class="prop-row__label">Font Size</span>
           <input class="prop-input prop-input--sm" type="text" value="${block.fontSize || '14px'}" data-prop="fontSize" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Mobile Size</span>
+          <input class="prop-input prop-input--sm" type="text" value="${block.mobileFontSize || ''}" data-prop="mobileFontSize" placeholder="Inherit" />
+        </div>
+        <div class="prop-row">
+          <span class="prop-row__label">Width</span>
+          <input class="prop-input prop-input--sm" type="text" value="${block.width || '100%'}" data-prop="width" placeholder="100%" />
         </div>
         <div class="prop-row">
           <span class="prop-row__label">Font Weight</span>
@@ -764,6 +773,39 @@ const PropertiesPanel = {
             <div class="prop-row">
               <span class="prop-row__label">Font Size</span>
               <input class="prop-input prop-input--sm" type="text" value="${gs.buttonFontSize}" data-global="buttonFontSize" />
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Responsive / Mobile Styles -->
+      <div class="accordion">
+        <div class="accordion__header">
+          <svg style="width:14px;height:14px;margin-right:6px;color:var(--accent-blue);" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          Responsive / Mobile
+          <svg class="accordion__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div class="accordion__body">
+          <div class="accordion__content">
+            <div class="prop-row">
+              <span class="prop-row__label">Body Size</span>
+              <input class="prop-input prop-input--sm" type="text" value="${gs.mobileFontSize || ''}" data-global="mobileFontSize" placeholder="Inherit" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">H1 Size</span>
+              <input class="prop-input prop-input--sm" type="text" value="${gs.mobileH1Size || ''}" data-global="mobileH1Size" placeholder="Inherit" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">H2 Size</span>
+              <input class="prop-input prop-input--sm" type="text" value="${gs.mobileH2Size || ''}" data-global="mobileH2Size" placeholder="Inherit" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">H3 Size</span>
+              <input class="prop-input prop-input--sm" type="text" value="${gs.mobileH3Size || ''}" data-global="mobileH3Size" placeholder="Inherit" />
+            </div>
+            <div class="prop-row">
+              <span class="prop-row__label">Button Size</span>
+              <input class="prop-input prop-input--sm" type="text" value="${gs.mobileButtonFontSize || ''}" data-global="mobileButtonFontSize" placeholder="Inherit" />
             </div>
           </div>
         </div>

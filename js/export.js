@@ -90,7 +90,10 @@ ${blockTrHtml}
     table, td { border-collapse: collapse; mso-table-lspace: 0pt; mso-table-rspace: 0pt; }
     img { border: 0; height: auto; line-height: 100%; outline: none; text-decoration: none; -ms-interpolation-mode: bicubic; }
     p, a { line-height: 150%; margin: 0; }
-    h1, h2, h3, h4, h5, h6 { line-height: 120%; margin: 0; }
+    h1 { font-size: ${gs.h1Size} !important; color: ${gs.h1Color} !important; line-height: 120%; margin: 0; }
+    h2 { font-size: ${gs.h2Size} !important; color: ${gs.h2Color} !important; line-height: 120%; margin: 0; }
+    h3 { font-size: ${gs.h3Size} !important; color: ${gs.h3Color} !important; line-height: 120%; margin: 0; }
+    h4, h5, h6 { line-height: 120%; margin: 0; }
     a[x-apple-data-detectors], #MessageViewBody a { color: inherit !important; text-decoration: none !important; font-size: inherit !important; font-family: inherit !important; font-weight: inherit !important; line-height: inherit !important; }
     .v { display:none; float:left; overflow:hidden; width:0; max-height:0; line-height:0; mso-hide:all; }
     .es-desktop-only { display: table-row !important; }
@@ -101,9 +104,10 @@ ${blockTrHtml}
       .adapt-img { width: 100% !important; height: auto !important; }
       .es-m-p10 { padding: 10px !important; }
       .es-m-p15 { padding: 15px !important; }
-      h1 { font-size: 28px !important; line-height: 120% !important; }
-      h2 { font-size: 22px !important; line-height: 120% !important; }
-      h3 { font-size: 18px !important; line-height: 120% !important; }
+      body, p, a, span { ${gs.mobileFontSize ? `font-size: ${gs.mobileFontSize} !important;` : ''} }
+      h1 { font-size: ${gs.mobileH1Size || gs.h1Size} !important; line-height: 120% !important; }
+      h2 { font-size: ${gs.mobileH2Size || gs.h2Size} !important; line-height: 120% !important; }
+      h3 { font-size: ${gs.mobileH3Size || gs.h3Size} !important; line-height: 120% !important; }
       .es-button { display: block !important; width: 100% !important; }
       .es-desktop-only { display: none !important; }
       .es-mobile-only { display: table-row !important; }
@@ -111,7 +115,7 @@ ${blockTrHtml}
       .es-m-stack .es-m-stack-col { display: block !important; float: none !important; width: 100% !important; max-width: 100% !important; }
       .es-m-stack .es-m-col-inner { width: 100% !important; max-width: 100% !important; }
       .es-m-stack .es-m-stack-gap-pad { padding-left: 0 !important; padding-right: 0 !important; }
-${this.generatePerBlockMobileCss(blocks, width)}
+${this.generatePerBlockMobileCss(blocks, width, gs)}
     }
     /* Width containment */
     .es-content-body { max-width: ${width}px !important; }
@@ -142,15 +146,23 @@ ${bodyContent}
   /**
    * Generate per-block mobile CSS rules
    */
-  generatePerBlockMobileCss(blocks, width) {
+  generatePerBlockMobileCss(blocks, width, gs) {
     let css = '';
     const processBlock = (block) => {
       // Mobile font size override for text blocks
-      if (block.type === 'text' && block.mobileFontSize) {
-        css += `      .es-b-${block.id} p, .es-b-${block.id} a, .es-b-${block.id} span, .es-b-${block.id} h1, .es-b-${block.id} h2, .es-b-${block.id} h3 { font-size: ${block.mobileFontSize} !important; }\n`;
+      const textFs = block.mobileFontSize;
+      if (block.type === 'text' && textFs) {
+        css += `      .es-b-${block.id} p, .es-b-${block.id} a, .es-b-${block.id} span, .es-b-${block.id} h1, .es-b-${block.id} h2, .es-b-${block.id} h3 { font-size: ${textFs} !important; }\n`;
       }
-      if (block.type === 'button' && block.mobileFontSize) {
-        css += `      .es-b-${block.id} a, .es-b-${block.id} span { font-size: ${block.mobileFontSize} !important; }\n`;
+      
+      const btnFs = block.mobileFontSize || gs.mobileButtonFontSize;
+      if (block.type === 'button' && btnFs) {
+        css += `      .es-b-${block.id} a, .es-b-${block.id} span { font-size: ${btnFs} !important; }\n`;
+      }
+      
+      const menuFs = block.mobileFontSize || gs.mobileFontSize;
+      if (block.type === 'menu' && menuFs) {
+        css += `      .es-b-${block.id} a { font-size: ${menuFs} !important; }\n`;
       }
       
       // Mobile alignment override
@@ -574,10 +586,12 @@ ${contentTd}
     else if (block.align === 'left') justify = 'flex-start';
     else if (block.align === 'right') justify = 'flex-end';
 
+    const blockWidth = block.width || '100%';
+
     return `
                             <tr class="${mc}">
-                              <td style="padding:0;Margin:0">
-                                <table cellpadding="0" cellspacing="0" width="100%" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px">
+                              <td style="padding:0;Margin:0" align="${block.align || 'center'}">
+                                <table cellpadding="0" cellspacing="0" width="${blockWidth}" role="presentation" style="mso-table-lspace:0pt;mso-table-rspace:0pt;border-spacing:0px;margin:0 auto;">
                                   <tr style="display:flex;justify-content:${justify}">${items}
                                   </tr>
                                 </table>
